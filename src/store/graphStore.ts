@@ -1,7 +1,13 @@
 import { create } from 'zustand'
 import { SEED_COMPANIES, ANIMATION } from '../shared/constants'
-import { mockNews, mockDiscussion } from '../data/mockData'
+import { apiFetch } from '../data/api'
+import type { NewsItem, DiscussionItem } from '../shared/types'
 import type { AppNode, AppEdge, CompanyFlowNode, NewsFlowNode, DiscussionFlowNode } from '../graph/graphTypes'
+
+interface SignalsResponse {
+  news: NewsItem[]
+  discussion: DiscussionItem[]
+}
 
 interface GraphState {
   nodes: AppNode[]
@@ -54,58 +60,65 @@ export const useGraphStore = create<GraphState>((set, get) => ({
       return
     }
 
-    // Expand: create signal nodes from mock data
-    const newsItems = mockNews[companyId] ?? []
-    const discussionItems = mockDiscussion[companyId] ?? []
+    // Expand: fetch signals from API then build nodes (fire-and-forget)
+    void apiFetch<SignalsResponse>(`/api/signals/${companyId}`).then(
+      ({ news: newsItems, discussion: discussionItems }) => {
+        const { nodes: currentNodes, edges: currentEdges } = get()
 
-    const newNewsNodes: NewsFlowNode[] = newsItems.map((item, i) => ({
-      id: `${companyId}-news-${item.id}`,
-      type: 'news',
-      position: { x: 0, y: 0 },
-      data: {
-        item,
-        animationDelay: i * ANIMATION.stagger,
-        parentId: companyId,
+        // Guard: node may have been removed while the request was in-flight
+        const node = currentNodes.find((n) => n.id === companyId)
+        if (!node || node.type !== 'company') return
+
+        const newNewsNodes: NewsFlowNode[] = newsItems.map((item, i) => ({
+          id: `${companyId}-news-${item.id}`,
+          type: 'news',
+          position: { x: 0, y: 0 },
+          data: {
+            item,
+            animationDelay: i * ANIMATION.stagger,
+            parentId: companyId,
+          },
+        }))
+
+        const newDiscussionNodes: DiscussionFlowNode[] = discussionItems.map((item, i) => ({
+          id: `${companyId}-discussion-${item.id}`,
+          type: 'discussion',
+          position: { x: 0, y: 0 },
+          data: {
+            item,
+            animationDelay: (newsItems.length + i) * ANIMATION.stagger,
+            parentId: companyId,
+          },
+        }))
+
+        const newEdges: AppEdge[] = [
+          ...newNewsNodes.map((n) => ({
+            id: `edge-${companyId}-${n.id}`,
+            source: companyId,
+            target: n.id,
+            data: {} as Record<string, never>,
+          })),
+          ...newDiscussionNodes.map((n) => ({
+            id: `edge-${companyId}-${n.id}`,
+            source: companyId,
+            target: n.id,
+            data: {} as Record<string, never>,
+          })),
+        ]
+
+        const nextNodes: AppNode[] = [
+          ...currentNodes.map((n) => {
+            if (n.id === companyId && n.type === 'company') {
+              return { ...n, data: { ...n.data, expanded: true } }
+            }
+            return n
+          }),
+          ...newNewsNodes,
+          ...newDiscussionNodes,
+        ]
+
+        set({ nodes: nextNodes, edges: [...currentEdges, ...newEdges] })
       },
-    }))
-
-    const newDiscussionNodes: DiscussionFlowNode[] = discussionItems.map((item, i) => ({
-      id: `${companyId}-discussion-${item.id}`,
-      type: 'discussion',
-      position: { x: 0, y: 0 },
-      data: {
-        item,
-        animationDelay: (newsItems.length + i) * ANIMATION.stagger,
-        parentId: companyId,
-      },
-    }))
-
-    const newEdges: AppEdge[] = [
-      ...newNewsNodes.map((n) => ({
-        id: `edge-${companyId}-${n.id}`,
-        source: companyId,
-        target: n.id,
-        data: {} as Record<string, never>,
-      })),
-      ...newDiscussionNodes.map((n) => ({
-        id: `edge-${companyId}-${n.id}`,
-        source: companyId,
-        target: n.id,
-        data: {} as Record<string, never>,
-      })),
-    ]
-
-    const nextNodes: AppNode[] = [
-      ...nodes.map((n) => {
-        if (n.id === companyId && n.type === 'company') {
-          return { ...n, data: { ...n.data, expanded: true } }
-        }
-        return n
-      }),
-      ...newNewsNodes,
-      ...newDiscussionNodes,
-    ]
-
-    set({ nodes: nextNodes, edges: [...edges, ...newEdges] })
+    )
   },
 }))
