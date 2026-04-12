@@ -13,7 +13,8 @@ CREATE TABLE IF NOT EXISTS price_points (
   low REAL,
   close REAL,
   volume INTEGER,
-  FOREIGN KEY (company_id) REFERENCES companies(id)
+  FOREIGN KEY (company_id) REFERENCES companies(id),
+  UNIQUE (company_id, timestamp)
 );
 
 CREATE TABLE IF NOT EXISTS news_items (

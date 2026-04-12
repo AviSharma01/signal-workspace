@@ -26,5 +26,7 @@ dist-ssr
 **/claude.md
 
 .env
-data/signal.db
+server/signal.db
 server/venv/
+__pycache__/
+*.pyc
