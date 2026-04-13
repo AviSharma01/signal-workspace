@@ -34,6 +34,7 @@ export const useGraphStore = create<GraphState>((set, get) => ({
   edges: [],
 
   initGraph() {
+    if (get().nodes.length > 0) return
     set({ nodes: SEED_COMPANIES.map(makeCompanyNode), edges: [] })
   },
 

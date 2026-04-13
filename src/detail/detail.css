@@ -1,0 +1,9 @@
+/* Chart container — Lightweight Charts renders a canvas that needs overflow contained */
+.chart-container {
+  overflow: hidden;
+}
+
+/* Suppress the LW Charts default blue selection outline on the canvas */
+.chart-container canvas {
+  outline: none;
+}

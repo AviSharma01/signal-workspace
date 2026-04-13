@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react'
+import { useReducer, useEffect, useRef } from 'react'
 import type { NewsItem, DiscussionItem } from '../shared/types'
 import { apiFetch } from './api'
 
@@ -14,38 +14,51 @@ interface SignalsResponse {
   discussion: DiscussionItem[]
 }
 
+type State = SignalsResult
+
+type Action =
+  | { type: 'start' }
+  | { type: 'success'; news: NewsItem[]; discussion: DiscussionItem[] }
+  | { type: 'error'; error: string }
+
+function reducer(_state: State, action: Action): State {
+  switch (action.type) {
+    case 'start':
+      return { news: [], discussion: [], loading: true, error: null }
+    case 'success':
+      return { news: action.news, discussion: action.discussion, loading: false, error: null }
+    case 'error':
+      return { news: [], discussion: [], loading: false, error: action.error }
+  }
+}
+
+const initialState: State = { news: [], discussion: [], loading: false, error: null }
+
 export function useSignals(companyId: string | null): SignalsResult {
-  const [news, setNews] = useState<NewsItem[]>([])
-  const [discussion, setDiscussion] = useState<DiscussionItem[]>([])
-  const [loading, setLoading] = useState(false)
-  const [error, setError] = useState<string | null>(null)
+  const [state, dispatch] = useReducer(reducer, initialState)
+
+  // Track fetch generation so stale responses from a previous companyId are dropped
+  const generationRef = useRef(0)
 
   useEffect(() => {
     if (!companyId) return
 
-    let cancelled = false
-    setLoading(true)
-    setError(null)
+    const generation = ++generationRef.current
+    dispatch({ type: 'start' })
 
     apiFetch<SignalsResponse>(`/api/signals/${companyId}`)
       .then((data) => {
-        if (!cancelled) {
-          setNews(data.news)
-          setDiscussion(data.discussion)
-          setLoading(false)
-        }
+        if (generation !== generationRef.current) return
+        dispatch({ type: 'success', news: data.news, discussion: data.discussion })
       })
       .catch((err: unknown) => {
-        if (!cancelled) {
-          setError(err instanceof Error ? err.message : 'Unknown error')
-          setLoading(false)
-        }
+        if (generation !== generationRef.current) return
+        dispatch({
+          type: 'error',
+          error: err instanceof Error ? err.message : 'Unknown error',
+        })
       })
-
-    return () => {
-      cancelled = true
-    }
   }, [companyId])
 
-  return { news, discussion, loading, error }
+  return state
 }
