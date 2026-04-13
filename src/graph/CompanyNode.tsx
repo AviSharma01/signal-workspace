@@ -3,7 +3,7 @@ import { Handle, Position, type NodeProps } from 'reactflow'
 import { motion } from 'framer-motion'
 import { useGraphStore } from '../store/graphStore'
 import type { CompanyNodeData } from './graphTypes'
-import { NODE_DIMENSIONS } from './useGraphLayout'
+import { NODE_DIMENSIONS } from '../shared/constants'
 import { ACCENT, BG_SURFACE, BORDER, TEXT_PRIMARY, TEXT_MUTED, ANIMATION } from '../shared/constants'
 
 const { width, height } = NODE_DIMENSIONS.company

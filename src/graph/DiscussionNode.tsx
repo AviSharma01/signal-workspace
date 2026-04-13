@@ -3,7 +3,7 @@ import { Handle, Position, type NodeProps } from 'reactflow'
 import { motion } from 'framer-motion'
 import { useUiStore } from '../store/uiStore'
 import type { DiscussionNodeData } from './graphTypes'
-import { NODE_DIMENSIONS } from './useGraphLayout'
+import { NODE_DIMENSIONS } from '../shared/constants'
 import { ANIMATION, BG_SURFACE, BORDER, TEXT_PRIMARY, TEXT_MUTED } from '../shared/constants'
 import NodeTooltip from './NodeTooltip'
 

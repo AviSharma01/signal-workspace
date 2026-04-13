@@ -1,5 +1,7 @@
 import sqlite3
+from contextlib import contextmanager
 from pathlib import Path
+from typing import Generator
 
 DB_PATH = Path(__file__).parent.parent / "signal.db"
 SCHEMA_PATH = Path(__file__).parent / "schema.sql"
@@ -13,10 +15,18 @@ SEED_COMPANIES: list[tuple[str, str, str]] = [
 ]
 
 
-def get_connection() -> sqlite3.Connection:
+@contextmanager
+def get_connection() -> Generator[sqlite3.Connection, None, None]:
     conn = sqlite3.connect(DB_PATH)
     conn.row_factory = sqlite3.Row
-    return conn
+    try:
+        yield conn
+        conn.commit()
+    except Exception:
+        conn.rollback()
+        raise
+    finally:
+        conn.close()
 
 
 def init_db() -> None:
