@@ -1,15 +1,12 @@
 import { useEffect, useState, useMemo, useCallback, useRef } from 'react'
 import ReactFlow, {
   ReactFlowProvider,
-  applyNodeChanges,
   useReactFlow,
-  type Node,
-  type OnNodesChange,
   type NodeMouseHandler,
 } from 'reactflow'
 import 'reactflow/dist/style.css'
 import { useGraphStore } from '../store/graphStore'
-import { useGraphLayout } from './useGraphLayout'
+import { useForceLayout } from './useForceLayout'
 import CompanyNode from './CompanyNode'
 import NewsNode from './NewsNode'
 import DiscussionNode from './DiscussionNode'
@@ -17,7 +14,6 @@ import type { AppEdge } from './graphTypes'
 import { BORDER } from '../shared/constants'
 import './graph.css'
 
-// Defined outside component so React Flow never sees a new reference
 const nodeTypes = {
   company: CompanyNode,
   news: NewsNode,
@@ -33,13 +29,10 @@ function GraphViewInner() {
   const rawEdges = useGraphStore((s) => s.edges)
   const initGraph = useGraphStore((s) => s.initGraph)
 
-  const layoutedNodes = useGraphLayout(rawNodes, rawEdges)
+  // Force simulation drives positions — updates on every tick via internal setTick
+  const simulatedNodes = useForceLayout(rawNodes, rawEdges)
 
-  // Local display state — decoupled from store so drag moves don't trigger re-layout
-  const [displayNodes, setDisplayNodes] = useState<Node[]>([])
-  const [displayEdges, setDisplayEdges] = useState<AppEdge[]>([])
   const [hoveredNodeId, setHoveredNodeId] = useState<string | null>(null)
-
   const { fitView } = useReactFlow()
   const initialFitDoneRef = useRef(false)
 
@@ -47,29 +40,17 @@ function GraphViewInner() {
     initGraph()
   }, [initGraph])
 
-  // Push new layout into display state whenever the node structure changes.
-  // This intentionally resets any drag positions on expand/collapse.
+  // Fit view once — very zoomed out so the whole graph breathes.
+  // Obsidian-style: you see everything at a glance, zoom in to inspect.
+  // After expansion the view stays put; new nodes animate into frame.
   useEffect(() => {
-    setDisplayNodes(layoutedNodes)
-  }, [layoutedNodes])
-
-  useEffect(() => {
-    setDisplayEdges(rawEdges)
-  }, [rawEdges])
-
-  // Fit view once after the first batch of nodes lands
-  useEffect(() => {
-    if (displayNodes.length > 0 && !initialFitDoneRef.current) {
+    if (simulatedNodes.length > 0 && !initialFitDoneRef.current) {
       initialFitDoneRef.current = true
-      const timer = setTimeout(() => fitView({ duration: 400, padding: 0.15 }), 50)
+      // Delay slightly so the first simulation tick has positioned nodes
+      const timer = setTimeout(() => fitView({ duration: 700, padding: 0.45 }), 120)
       return () => clearTimeout(timer)
     }
-  }, [displayNodes.length, fitView])
-
-  const onNodesChange: OnNodesChange = useCallback(
-    (changes) => setDisplayNodes((nds) => applyNodeChanges(changes, nds)),
-    [],
-  )
+  }, [simulatedNodes.length, fitView])
 
   const onNodeMouseEnter: NodeMouseHandler = useCallback((_, node) => {
     if (node.type !== 'company') setHoveredNodeId(node.id)
@@ -79,25 +60,27 @@ function GraphViewInner() {
     setHoveredNodeId(null)
   }, [])
 
-  // Derive highlighted edges without touching store state
-  const highlightedEdges = useMemo(() => {
-    if (!hoveredNodeId) return displayEdges
-    return displayEdges.map((e) => ({
+  const highlightedEdges = useMemo((): AppEdge[] => {
+    if (!hoveredNodeId) return rawEdges
+    return rawEdges.map((e) => ({
       ...e,
       className: e.target === hoveredNodeId ? 'highlighted' : '',
     }))
-  }, [displayEdges, hoveredNodeId])
+  }, [rawEdges, hoveredNodeId])
 
   return (
     <div className="graph-canvas">
       <ReactFlow
-        nodes={displayNodes}
+        nodes={simulatedNodes}
         edges={highlightedEdges}
-        onNodesChange={onNodesChange}
         onNodeMouseEnter={onNodeMouseEnter}
         onNodeMouseLeave={onNodeMouseLeave}
         nodeTypes={nodeTypes}
         defaultEdgeOptions={defaultEdgeOptions}
+        // Layout is owned by the force simulation — disable drag so nodes
+        // settle naturally rather than fighting user position overrides
+        nodesDraggable={false}
+        nodesConnectable={false}
         proOptions={{ hideAttribution: true }}
         selectionOnDrag={false}
         elevateEdgesOnSelect={false}

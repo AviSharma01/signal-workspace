@@ -19,3 +19,10 @@ export const SEED_COMPANIES = [
   { id: 'AMZN', name: 'Amazon', sector: 'Consumer' },
   { id: 'NVDA', name: 'Nvidia', sector: 'Semiconductors' },
 ]
+
+// Node dimensions — single source of truth used by node components and the force layout
+export const NODE_DIMENSIONS = {
+  company: { width: 160, height: 36 },
+  news: { width: 210, height: 32 },
+  discussion: { width: 210, height: 32 },
+} as const satisfies Record<string, { width: number; height: number }>
