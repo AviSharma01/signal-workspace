@@ -24,9 +24,13 @@ dist-ssr
 *.sw?
 
 **/claude.md
+agents.md
+**/agent_spec.md
 
 .env
 server/signal.db
 server/venv/
+server/.agent_spend.json
+venv/
 __pycache__/
 *.pyc
