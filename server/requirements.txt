@@ -3,3 +3,4 @@ uvicorn[standard]
 yfinance
 apscheduler
 python-dotenv
+anthropic
