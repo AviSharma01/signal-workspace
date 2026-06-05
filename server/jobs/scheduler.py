@@ -5,6 +5,7 @@ from apscheduler.schedulers.background import BackgroundScheduler
 from jobs.prices import fetch_prices
 from jobs.news import fetch_news
 from jobs.discussion import fetch_discussion
+from jobs.scan_signals import scan_signals
 
 _scheduler = BackgroundScheduler()
 
@@ -14,6 +15,7 @@ def start_scheduler() -> None:
     _scheduler.add_job(fetch_prices, "interval", minutes=15, next_run_time=now)
     _scheduler.add_job(fetch_news, "interval", minutes=30, next_run_time=now)
     _scheduler.add_job(fetch_discussion, "interval", minutes=60, next_run_time=now)
+    _scheduler.add_job(scan_signals, "interval", minutes=15, next_run_time=now)
     _scheduler.start()
 
 
