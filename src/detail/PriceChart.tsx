@@ -1,4 +1,4 @@
-import { useEffect, useRef } from 'react'
+import { useEffect, useRef, useState } from 'react'
 import {
   createChart,
   CandlestickSeries,
@@ -14,7 +14,7 @@ import type {
 } from 'lightweight-charts'
 import type { PricePoint } from '../shared/types'
 import type { ChartMarker } from './EventMarker'
-import { ACCENT, BG_PRIMARY, BORDER, TEXT_MUTED } from '../shared/constants'
+import { ACCENT, BG_PRIMARY, BG_SURFACE, BORDER, TEXT_MUTED, TEXT_PRIMARY } from '../shared/constants'
 
 // Colours for markers — inactive versions are dimmed so the chart stays readable
 const MARKER_NEWS_ACTIVE = ACCENT
@@ -27,7 +27,7 @@ const CHART_OPTIONS = {
     background: { color: BG_PRIMARY },
     textColor: TEXT_MUTED,
     fontSize: 11,
-    fontFamily: "Inter, -apple-system, sans-serif",
+    fontFamily: 'Inter, -apple-system, sans-serif',
   },
   grid: {
     vertLines: { color: 'transparent' },
@@ -65,6 +65,14 @@ const LINE_OPTIONS = {
   crosshairMarkerRadius: 4,
 } as const
 
+interface OhlcTooltip {
+  time: number
+  open?: number
+  high?: number
+  low?: number
+  close: number
+}
+
 interface PriceChartProps {
   prices: PricePoint[]
   markers: ChartMarker[]
@@ -72,6 +80,18 @@ interface PriceChartProps {
   onMarkerClick: (signalId: string) => void
   chartType: 'candlestick' | 'line'
   loading: boolean
+}
+
+function fmt(n: number) {
+  return n.toFixed(2)
+}
+
+function formatTooltipTime(unixSeconds: number): string {
+  return new Date(unixSeconds * 1000).toLocaleDateString('en-US', {
+    month: 'short',
+    day: 'numeric',
+    year: 'numeric',
+  })
 }
 
 export default function PriceChart({
@@ -97,7 +117,9 @@ export default function PriceChart({
   useEffect(() => { markersRef.current = markers }, [markers])
   useEffect(() => { onMarkerClickRef.current = onMarkerClick }, [onMarkerClick])
 
-  // ── Effect 1: create chart, subscribe to click, hook up ResizeObserver ──────
+  const [tooltip, setTooltip] = useState<OhlcTooltip | null>(null)
+
+  // ── Effect 1: create chart, subscribe to click and crosshair, ResizeObserver ─
   useEffect(() => {
     if (!containerRef.current) return
 
@@ -109,8 +131,7 @@ export default function PriceChart({
     chartRef.current = chart
 
     // Click handler: find the nearest ChartMarker by time and fire onMarkerClick.
-    // Tolerance: 1 bar-width. For daily data that's 86400s; for intraday less.
-    // Using 2 days (172800s) as a loose but safe threshold across all ranges.
+    // Tolerance: 2 days (172800s) — loose but safe threshold across all ranges.
     const clickHandler = (param: MouseEventParams<Time>) => {
       if (!param.time) return
       const clickTime = param.time as number
@@ -131,6 +152,25 @@ export default function PriceChart({
     }
     chart.subscribeClick(clickHandler)
 
+    // Crosshair handler: populate the OHLC tooltip while hovering.
+    // Reads seriesRef at call time so it always targets the current series.
+    const crosshairHandler = (param: MouseEventParams<Time>) => {
+      if (!param.time || !seriesRef.current) {
+        setTooltip(null)
+        return
+      }
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      const raw = param.seriesData.get(seriesRef.current) as any
+      if (!raw) { setTooltip(null); return }
+
+      if ('open' in raw) {
+        setTooltip({ time: param.time as number, open: raw.open, high: raw.high, low: raw.low, close: raw.close })
+      } else {
+        setTooltip({ time: param.time as number, close: raw.value })
+      }
+    }
+    chart.subscribeCrosshairMove(crosshairHandler)
+
     const resizeObserver = new ResizeObserver(() => {
       if (containerRef.current && chartRef.current) {
         chartRef.current.applyOptions({
@@ -144,6 +184,7 @@ export default function PriceChart({
     return () => {
       resizeObserver.disconnect()
       chart.unsubscribeClick(clickHandler)
+      chart.unsubscribeCrosshairMove(crosshairHandler)
       chart.remove()
       chartRef.current = null
       seriesRef.current = null
@@ -153,8 +194,6 @@ export default function PriceChart({
   }, [])
 
   // ── Effect 2: create or swap series when chartType changes ──────────────────
-  // Runs on mount (creates initial series) and when chartType prop changes.
-  // Effect 1 is declared first so chartRef is guaranteed set before this runs.
   useEffect(() => {
     const chart = chartRef.current
     if (!chart) return
@@ -167,7 +206,6 @@ export default function PriceChart({
       seriesRef.current = null
     }
 
-    // Create new series
     if (chartType === 'candlestick') {
       seriesRef.current = chart.addSeries(CandlestickSeries, CANDLESTICK_OPTIONS)
     } else {
@@ -176,9 +214,10 @@ export default function PriceChart({
 
     // Initialise an empty markers plugin so Effect 4 can always call setMarkers
     markersPluginRef.current = createSeriesMarkers(
-      seriesRef.current as Parameters<typeof createSeriesMarkers>[0],
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      seriesRef.current as any,
       [],
-    )
+    ) as ISeriesMarkersPluginApi<Time>
 
     prevChartTypeRef.current = chartType
   }, [chartType])
@@ -208,8 +247,6 @@ export default function PriceChart({
   }, [prices, chartType])
 
   // ── Effect 4: update markers ─────────────────────────────────────────────────
-  // Depends on chartType so it re-runs after Effect 2 swaps the series,
-  // ensuring the new plugin is populated with the current marker set.
   useEffect(() => {
     if (!markersPluginRef.current) return
 
@@ -218,7 +255,7 @@ export default function PriceChart({
       const isNews = m.type === 'news'
       return {
         time: m.time as Time,
-        position: (isNews ? 'aboveBar' : 'belowBar') as const,
+        position: isNews ? ('aboveBar' as const) : ('belowBar' as const),
         shape: 'circle' as const,
         color: isActive
           ? (isNews ? MARKER_NEWS_ACTIVE : MARKER_DISC_ACTIVE)
@@ -234,6 +271,42 @@ export default function PriceChart({
   return (
     <div style={{ position: 'relative', width: '100%', height: '100%' }}>
       <div ref={containerRef} className="chart-container" style={{ width: '100%', height: '100%' }} />
+
+      {/* OHLC tooltip — top-left, updates on crosshair move */}
+      {tooltip && (
+        <div
+          style={{
+            position: 'absolute',
+            top: 12,
+            left: 12,
+            pointerEvents: 'none',
+            backgroundColor: `${BG_SURFACE}f0`,
+            border: `1px solid ${BORDER}`,
+            borderRadius: 4,
+            padding: '6px 10px',
+            fontSize: 11,
+            lineHeight: 1.7,
+            zIndex: 1,
+          }}
+        >
+          <div style={{ color: TEXT_MUTED, marginBottom: 2 }}>
+            {formatTooltipTime(tooltip.time)}
+          </div>
+          {tooltip.open !== undefined ? (
+            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', columnGap: 14 }}>
+              <span style={{ color: TEXT_MUTED }}>O <span style={{ color: TEXT_PRIMARY, fontVariantNumeric: 'tabular-nums' }}>{fmt(tooltip.open)}</span></span>
+              <span style={{ color: TEXT_MUTED }}>H <span style={{ color: '#2da44e', fontVariantNumeric: 'tabular-nums' }}>{fmt(tooltip.high!)}</span></span>
+              <span style={{ color: TEXT_MUTED }}>C <span style={{ color: TEXT_PRIMARY, fontVariantNumeric: 'tabular-nums' }}>{fmt(tooltip.close)}</span></span>
+              <span style={{ color: TEXT_MUTED }}>L <span style={{ color: '#e5534b', fontVariantNumeric: 'tabular-nums' }}>{fmt(tooltip.low!)}</span></span>
+            </div>
+          ) : (
+            <span style={{ color: TEXT_PRIMARY, fontVariantNumeric: 'tabular-nums' }}>
+              {fmt(tooltip.close)}
+            </span>
+          )}
+        </div>
+      )}
+
       {loading && (
         <div
           style={{

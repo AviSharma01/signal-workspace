@@ -1,8 +1,8 @@
 import { create } from 'zustand'
-import { SEED_COMPANIES, ANIMATION } from '../shared/constants'
+import { ANIMATION } from '../shared/constants'
 import { apiFetch } from '../data/api'
-import type { NewsItem, DiscussionItem } from '../shared/types'
-import type { AppNode, AppEdge, CompanyFlowNode, NewsFlowNode, DiscussionFlowNode } from '../graph/graphTypes'
+import type { Company, NewsItem, DiscussionItem } from '../shared/types'
+import type { AppNode, AppEdge, CompanyFlowNode, NewsFlowNode, DiscussionFlowNode, RelatedCompanyFlowNode } from '../graph/graphTypes'
 
 interface SignalsResponse {
   news: NewsItem[]
@@ -12,11 +12,13 @@ interface SignalsResponse {
 interface GraphState {
   nodes: AppNode[]
   edges: AppEdge[]
+  loading: boolean
+  selectedCompanyId: string | null
   initGraph: () => void
-  toggleExpand: (companyId: string) => void
+  selectCompany: (companyId: string | null) => void
 }
 
-function makeCompanyNode(company: (typeof SEED_COMPANIES)[number]): CompanyFlowNode {
+function makeCompanyNode(company: Company): CompanyFlowNode {
   return {
     id: company.id,
     type: 'company',
@@ -24,7 +26,6 @@ function makeCompanyNode(company: (typeof SEED_COMPANIES)[number]): CompanyFlowN
     data: {
       label: company.name,
       sector: company.sector,
-      expanded: false,
     },
   }
 }
@@ -32,94 +33,84 @@ function makeCompanyNode(company: (typeof SEED_COMPANIES)[number]): CompanyFlowN
 export const useGraphStore = create<GraphState>((set, get) => ({
   nodes: [],
   edges: [],
+  loading: false,
+  selectedCompanyId: null,
 
-  initGraph() {
+  async initGraph() {
+    // Already initialized — skip fetch, preserves full state across navigation
     if (get().nodes.length > 0) return
-    set({ nodes: SEED_COMPANIES.map(makeCompanyNode), edges: [] })
-  },
 
-  toggleExpand(companyId) {
-    const { nodes, edges } = get()
+    set({ loading: true })
 
-    const companyNode = nodes.find((n) => n.id === companyId)
-    if (!companyNode || companyNode.type !== 'company') return
+    const companies = await apiFetch<Company[]>('/api/companies').catch(() => [] as Company[])
 
-    const isExpanded = companyNode.data.expanded
+    // Fetch all signals in parallel; individual failures return empty arrays
+    const results = await Promise.all(
+      companies.map((c) =>
+        apiFetch<SignalsResponse>(`/api/signals/${c.id}`)
+          .then((data) => ({ companyId: c.id, news: data.news, discussion: data.discussion }))
+          .catch(() => ({ companyId: c.id, news: [] as NewsItem[], discussion: [] as DiscussionItem[] })),
+      ),
+    )
 
-    if (isExpanded) {
-      // Collapse: remove all signal nodes and edges that belong to this company
-      const nextNodes = nodes
-        .filter((n) => n.type === 'company' || (n.data as { parentId: string }).parentId !== companyId)
-        .map((n) => {
-          if (n.id === companyId && n.type === 'company') {
-            return { ...n, data: { ...n.data, expanded: false } }
-          }
-          return n
-        })
-      const nextEdges = edges.filter((e) => e.source !== companyId)
-      set({ nodes: nextNodes, edges: nextEdges })
-      return
+    const companyNodes: CompanyFlowNode[] = companies.map(makeCompanyNode)
+    const signalNodes: AppNode[] = []
+    const edges: AppEdge[] = []
+
+    for (const { companyId, news: newsItems, discussion: discussionItems } of results) {
+      const companyInfo = companies.find((c) => c.id === companyId)!
+
+      const newNewsNodes: NewsFlowNode[] = newsItems.map((item, i) => ({
+        id: `${companyId}-news-${item.id}`,
+        type: 'news',
+        position: { x: 0, y: 0 },
+        data: { item, animationDelay: i * ANIMATION.stagger, parentId: companyId },
+      }))
+
+      const newDiscussionNodes: DiscussionFlowNode[] = discussionItems.map((item, i) => ({
+        id: `${companyId}-discussion-${item.id}`,
+        type: 'discussion',
+        position: { x: 0, y: 0 },
+        data: {
+          item,
+          animationDelay: (newsItems.length + i) * ANIMATION.stagger,
+          parentId: companyId,
+        },
+      }))
+
+      const signalCount = newsItems.length + discussionItems.length
+      const newRelatedNodes: RelatedCompanyFlowNode[] = companies
+        .filter((c) => c.sector === companyInfo.sector && c.id !== companyId)
+        .map((c, i) => ({
+          id: `${companyId}-related-${c.id}`,
+          type: 'relatedCompany' as const,
+          position: { x: 0, y: 0 },
+          data: {
+            label: c.name,
+            sector: c.sector,
+            ticker: c.id,
+            parentId: companyId,
+            animationDelay: (signalCount + i) * ANIMATION.stagger,
+          },
+        }))
+
+      const allSignalNodes = [...newNewsNodes, ...newDiscussionNodes, ...newRelatedNodes]
+      signalNodes.push(...allSignalNodes)
+
+      edges.push(
+        ...allSignalNodes.map((n) => ({
+          id: `edge-${companyId}-${n.id}`,
+          source: companyId,
+          target: n.id,
+          data: {} as Record<string, never>,
+        })),
+      )
     }
 
-    // Expand: fetch signals from API then build nodes (fire-and-forget)
-    void apiFetch<SignalsResponse>(`/api/signals/${companyId}`).then(
-      ({ news: newsItems, discussion: discussionItems }) => {
-        const { nodes: currentNodes, edges: currentEdges } = get()
+    set({ nodes: [...companyNodes, ...signalNodes], edges, loading: false })
+  },
 
-        // Guard: node may have been removed while the request was in-flight
-        const node = currentNodes.find((n) => n.id === companyId)
-        if (!node || node.type !== 'company') return
-
-        const newNewsNodes: NewsFlowNode[] = newsItems.map((item, i) => ({
-          id: `${companyId}-news-${item.id}`,
-          type: 'news',
-          position: { x: 0, y: 0 },
-          data: {
-            item,
-            animationDelay: i * ANIMATION.stagger,
-            parentId: companyId,
-          },
-        }))
-
-        const newDiscussionNodes: DiscussionFlowNode[] = discussionItems.map((item, i) => ({
-          id: `${companyId}-discussion-${item.id}`,
-          type: 'discussion',
-          position: { x: 0, y: 0 },
-          data: {
-            item,
-            animationDelay: (newsItems.length + i) * ANIMATION.stagger,
-            parentId: companyId,
-          },
-        }))
-
-        const newEdges: AppEdge[] = [
-          ...newNewsNodes.map((n) => ({
-            id: `edge-${companyId}-${n.id}`,
-            source: companyId,
-            target: n.id,
-            data: {} as Record<string, never>,
-          })),
-          ...newDiscussionNodes.map((n) => ({
-            id: `edge-${companyId}-${n.id}`,
-            source: companyId,
-            target: n.id,
-            data: {} as Record<string, never>,
-          })),
-        ]
-
-        const nextNodes: AppNode[] = [
-          ...currentNodes.map((n) => {
-            if (n.id === companyId && n.type === 'company') {
-              return { ...n, data: { ...n.data, expanded: true } }
-            }
-            return n
-          }),
-          ...newNewsNodes,
-          ...newDiscussionNodes,
-        ]
-
-        set({ nodes: nextNodes, edges: [...currentEdges, ...newEdges] })
-      },
-    )
+  selectCompany(companyId) {
+    set((s) => ({ selectedCompanyId: s.selectedCompanyId === companyId ? null : companyId }))
   },
 }))

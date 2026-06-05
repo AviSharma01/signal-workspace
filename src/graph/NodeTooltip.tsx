@@ -1,15 +1,6 @@
 import { NodeToolbar, Position } from 'reactflow'
 import { motion, AnimatePresence } from 'framer-motion'
-import { ANIMATION, BG_SURFACE, BORDER, TEXT_PRIMARY, TEXT_MUTED } from '../shared/constants'
-
-function formatRelativeTime(timestamp: number): string {
-  const diff = Date.now() - timestamp
-  const minutes = Math.floor(diff / 60000)
-  if (minutes < 60) return `${minutes}m ago`
-  const hours = Math.floor(minutes / 60)
-  if (hours < 24) return `${hours}h ago`
-  return `${Math.floor(hours / 24)}d ago`
-}
+import { ANIMATION, BG_SURFACE, BORDER, TEXT_PRIMARY, TEXT_MUTED, formatRelativeTime } from '../shared/constants'
 
 interface NodeTooltipProps {
   visible: boolean
@@ -49,7 +40,7 @@ export default function NodeTooltip({ visible, headline, source, publishedAt }: 
               {headline}
             </p>
             <p style={{ color: TEXT_MUTED, fontSize: 11, margin: 0 }}>
-              {source} · {formatRelativeTime(publishedAt)}
+              {source}{publishedAt > 0 ? ` · ${formatRelativeTime(publishedAt)}` : ''}
             </p>
           </motion.div>
         )}

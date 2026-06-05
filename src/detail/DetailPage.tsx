@@ -3,11 +3,13 @@ import { useParams, useNavigate } from 'react-router-dom'
 import { motion } from 'framer-motion'
 import { useSignals } from '../data/useSignals'
 import { usePrices } from '../data/usePrices'
+import { useCompanies } from '../data/useCompanies'
 import type { PriceRange } from '../data/usePrices'
 import { buildMarkers } from './EventMarker'
 import PriceChart from './PriceChart'
 import SignalPanel from './SignalPanel'
-import { SEED_COMPANIES, ACCENT, ANIMATION, BG_PRIMARY, BG_SURFACE, BORDER, TEXT_MUTED, TEXT_PRIMARY } from '../shared/constants'
+import FindingsPanel from './FindingsPanel'
+import { ACCENT, ANIMATION, BG_PRIMARY, BG_SURFACE, BORDER, TEXT_MUTED, TEXT_PRIMARY } from '../shared/constants'
 import './detail.css'
 
 type ChartType = 'candlestick' | 'line'
@@ -31,7 +33,8 @@ function formatDayChange(prices1D: { close: number }[]): { text: string; positiv
 export default function DetailPage() {
   const { companyId } = useParams<{ companyId: string }>()
   const navigate = useNavigate()
-  const company = SEED_COMPANIES.find((c) => c.id === companyId)
+  const { companies } = useCompanies()
+  const company = companies.find((c) => c.id === companyId)
 
   const [chartType, setChartType] = useState<ChartType>('candlestick')
   const [range, setRange] = useState<PriceRange>('1M')
@@ -44,6 +47,11 @@ export default function DetailPage() {
   const { prices, loading: pricesLoading } = usePrices(companyId ?? '', range)
   const { prices: prices1D, loading: prices1DLoading } = usePrices(companyId ?? '', '1D')
   const { news, discussion, loading: signalsLoading } = useSignals(companyId ?? null)
+
+  const relatedCompanies = useMemo(
+    () => company ? companies.filter((c) => c.sector === company.sector && c.id !== companyId) : [],
+    [company, companyId, companies],
+  )
 
   const priceRange = useMemo(
     () => ({
@@ -209,7 +217,7 @@ export default function DetailPage() {
         </div>
       </header>
 
-      {/* ── Body: chart + signal panel ── */}
+      {/* ── Body: chart + findings + signal panel ── */}
       <div style={{ flex: 1, display: 'flex', overflow: 'hidden' }}>
         <div style={{ flex: 1, overflow: 'hidden' }}>
           <PriceChart
@@ -222,12 +230,27 @@ export default function DetailPage() {
           />
         </div>
 
+        {/* Findings panel — investigation agent output */}
+        <div
+          style={{
+            width: 280,
+            flexShrink: 0,
+            borderLeft: `1px solid ${BORDER}`,
+            overflow: 'hidden',
+            display: 'flex',
+            flexDirection: 'column',
+          }}
+        >
+          <FindingsPanel companyId={companyId ?? ''} />
+        </div>
+
         <SignalPanel
           news={news}
           discussion={discussion}
           activeSignalId={activeSignalId}
           onSignalSelect={handleSignalSelect}
           loading={signalsLoading}
+          relatedCompanies={relatedCompanies}
         />
       </div>
     </motion.div>

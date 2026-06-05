@@ -1,54 +1,45 @@
 import { memo, useState } from 'react'
 import { Handle, Position, type NodeProps } from 'reactflow'
+import { useNavigate } from 'react-router-dom'
 import { motion } from 'framer-motion'
-import { useUiStore } from '../store/uiStore'
 import { useGraphStore } from '../store/graphStore'
-import type { DiscussionNodeData } from './graphTypes'
-import { ANIMATION, BLOB_DISCUSSION } from '../shared/constants'
+import type { RelatedCompanyNodeData } from './graphTypes'
+import { ANIMATION, BLOB_RELATED } from '../shared/constants'
 import NodeTooltip from './NodeTooltip'
 
-function blobSize(publishedAt: number): number {
-  const ageHours = (Date.now() - publishedAt) / 3_600_000
-  const size = 20 - ageHours * (12 / 72)
-  return Math.round(Math.max(8, Math.min(20, size)))
-}
+const DIAMETER = 14
 
-function DiscussionNode({ id, data }: NodeProps<DiscussionNodeData>) {
-  const openPanel = useUiStore((s) => s.openPanel)
-  const selectCompany = useGraphStore((s) => s.selectCompany)
+function RelatedCompanyNode({ data }: NodeProps<RelatedCompanyNodeData>) {
+  const navigate = useNavigate()
   const selectedCompanyId = useGraphStore((s) => s.selectedCompanyId)
   const [hovered, setHovered] = useState(false)
 
   const isDimmed = selectedCompanyId !== null && selectedCompanyId !== data.parentId
-  const diameter = blobSize(data.item.publishedAt)
 
   return (
     <div style={{ width: 28, height: 28, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
       <NodeTooltip
         visible={hovered}
-        headline={data.item.title}
-        source={data.item.source}
-        publishedAt={data.item.publishedAt}
+        headline={data.label}
+        source={data.ticker}
+        publishedAt={0}
       />
       <Handle type="target" position={Position.Left} isConnectable={false} />
       <motion.div
         initial={{ opacity: 0, scale: 0.5 }}
         animate={{
-          opacity: isDimmed ? 0.15 : (hovered ? 1 : 0.85),
+          opacity: isDimmed ? 0.15 : (hovered ? 1 : 0.7),
           scale: hovered ? 1.15 : 1,
         }}
         transition={{ ...ANIMATION.reveal, delay: data.animationDelay }}
         onMouseEnter={() => setHovered(true)}
         onMouseLeave={() => setHovered(false)}
-        onClick={() => {
-          selectCompany(data.parentId)
-          openPanel(id)
-        }}
+        onClick={() => navigate(`/company/${data.ticker}`)}
         style={{
-          width: diameter,
-          height: diameter,
+          width: DIAMETER,
+          height: DIAMETER,
           borderRadius: '50%',
-          backgroundColor: BLOB_DISCUSSION,
+          backgroundColor: BLOB_RELATED,
           cursor: 'pointer',
           flexShrink: 0,
         }}
@@ -57,4 +48,4 @@ function DiscussionNode({ id, data }: NodeProps<DiscussionNodeData>) {
   )
 }
 
-export default memo(DiscussionNode)
+export default memo(RelatedCompanyNode)

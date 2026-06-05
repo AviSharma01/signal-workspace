@@ -37,3 +37,30 @@ export interface DiscussionItem {
 export type SignalNode = NewsItem | DiscussionItem
 
 export type NodeType = 'company' | 'news' | 'discussion' | 'relatedCompany'
+
+export interface EvidenceEntry {
+  type: string
+  ref: string
+  why: string
+}
+
+export interface FindingTrigger {
+  z_score: number
+  volume_ratio: number
+  direction: string
+  latest_return_pct: number
+}
+
+export interface Finding {
+  id: string
+  companyId: string
+  createdAt: number
+  trigger: FindingTrigger
+  primaryDriver: string
+  hypothesis: string
+  evidence: EvidenceEntry[]
+  confidence: string
+  needsHumanReview: boolean
+  iterations: number
+  costUsd: number
+}

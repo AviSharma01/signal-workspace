@@ -1,21 +1,12 @@
 import { useRef, useEffect } from 'react'
 import { motion } from 'framer-motion'
 import type { NewsItem, DiscussionItem } from '../shared/types'
-import { ACCENT, ANIMATION, BG_SURFACE, BORDER, TEXT_MUTED, TEXT_PRIMARY } from '../shared/constants'
+import { ACCENT, ANIMATION, BG_SURFACE, BORDER, TEXT_MUTED, TEXT_PRIMARY, formatRelativeTime } from '../shared/constants'
 
 type SignalItemData = NewsItem | DiscussionItem
 
 function isNews(item: SignalItemData): item is NewsItem {
   return 'headline' in item
-}
-
-function formatRelativeTime(timestamp: number): string {
-  const diff = Date.now() - timestamp
-  const minutes = Math.floor(diff / 60000)
-  if (minutes < 60) return `${minutes}m ago`
-  const hours = Math.floor(minutes / 60)
-  if (hours < 24) return `${hours}h ago`
-  return `${Math.floor(hours / 24)}d ago`
 }
 
 interface SignalItemProps {
@@ -62,6 +53,17 @@ export default function SignalItem({ item, isActive, animationDelay, onClick }: 
         }}
       >
         {item.source} · {formatRelativeTime(item.publishedAt)}
+        {item.url && (
+          <a
+            href={item.url}
+            target="_blank"
+            rel="noreferrer"
+            onClick={(e) => e.stopPropagation()}
+            style={{ color: TEXT_MUTED, marginLeft: 6, textDecoration: 'none', opacity: 0.7 }}
+          >
+            ↗
+          </a>
+        )}
       </p>
       <p
         style={{

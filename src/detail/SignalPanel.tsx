@@ -1,6 +1,8 @@
 import { motion } from 'framer-motion'
+import { useNavigate } from 'react-router-dom'
 import type { NewsItem, DiscussionItem } from '../shared/types'
-import { ANIMATION, BG_SURFACE, BORDER, TEXT_MUTED } from '../shared/constants'
+import type { Company } from '../shared/types'
+import { ANIMATION, BG_SURFACE, BLOB_RELATED, BORDER, TEXT_MUTED, TEXT_PRIMARY } from '../shared/constants'
 import SignalItem from './SignalItem'
 
 interface SignalPanelProps {
@@ -9,6 +11,7 @@ interface SignalPanelProps {
   activeSignalId: string | null
   onSignalSelect: (signalId: string) => void
   loading: boolean
+  relatedCompanies: Company[]
 }
 
 function SectionLabel({ label }: { label: string }) {
@@ -74,7 +77,9 @@ export default function SignalPanel({
   activeSignalId,
   onSignalSelect,
   loading,
+  relatedCompanies,
 }: SignalPanelProps) {
+  const navigate = useNavigate()
   return (
     <motion.aside
       initial={{ opacity: 0, x: 12 }}
@@ -129,6 +134,47 @@ export default function SignalPanel({
                   onClick={() => onSignalSelect(item.id)}
                 />
               ))}
+            </>
+          )}
+          {relatedCompanies.length > 0 && (
+            <>
+              <SectionLabel label="Related" />
+              <div style={{ padding: '4px 16px 16px', display: 'flex', flexDirection: 'column', gap: 2 }}>
+                {relatedCompanies.map((c) => (
+                  <button
+                    key={c.id}
+                    onClick={() => navigate(`/company/${c.id}`)}
+                    style={{
+                      display: 'flex',
+                      alignItems: 'center',
+                      gap: 10,
+                      padding: '7px 0',
+                      background: 'none',
+                      border: 'none',
+                      borderBottom: `1px solid ${BORDER}`,
+                      cursor: 'pointer',
+                      textAlign: 'left',
+                      width: '100%',
+                    }}
+                  >
+                    <div style={{
+                      width: 8,
+                      height: 8,
+                      borderRadius: '50%',
+                      backgroundColor: BLOB_RELATED,
+                      opacity: 0.8,
+                      flexShrink: 0,
+                    }} />
+                    <span style={{ fontSize: 11, color: TEXT_MUTED, fontFamily: 'monospace', letterSpacing: '0.06em', flexShrink: 0 }}>
+                      {c.id}
+                    </span>
+                    <span style={{ fontSize: 13, color: TEXT_PRIMARY, fontWeight: 500 }}>
+                      {c.name}
+                    </span>
+                    <span style={{ marginLeft: 'auto', fontSize: 12, color: TEXT_MUTED }}>→</span>
+                  </button>
+                ))}
+              </div>
             </>
           )}
         </>
