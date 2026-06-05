@@ -2,6 +2,8 @@
 
 A local-first desktop tool for tracking market signals around a small set of companies. Connects price action with the news and discussion around it, locally, on your own machine.
 
+src/docs/demo.mp4
+
 ---
 
 ## What it is
