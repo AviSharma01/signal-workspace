@@ -17,7 +17,11 @@ function RelatedCompanyNode({ data }: NodeProps<RelatedCompanyNodeData>) {
   const isDimmed = selectedCompanyId !== null && selectedCompanyId !== data.parentId
 
   return (
-    <div style={{ width: 28, height: 28, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+    <div
+      style={{ width: 28, height: 28, display: 'flex', alignItems: 'center', justifyContent: 'center' }}
+      onMouseEnter={() => setHovered(true)}
+      onMouseLeave={() => setHovered(false)}
+    >
       <NodeTooltip
         visible={hovered}
         headline={data.label}
@@ -32,8 +36,6 @@ function RelatedCompanyNode({ data }: NodeProps<RelatedCompanyNodeData>) {
           scale: hovered ? 1.15 : 1,
         }}
         transition={{ ...ANIMATION.reveal, delay: data.animationDelay }}
-        onMouseEnter={() => setHovered(true)}
-        onMouseLeave={() => setHovered(false)}
         onClick={() => navigate(`/company/${data.ticker}`)}
         style={{
           width: DIAMETER,

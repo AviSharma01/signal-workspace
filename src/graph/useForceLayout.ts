@@ -11,6 +11,7 @@ import {
 } from 'd3-force'
 import type { AppNode, AppEdge } from './graphTypes'
 import { NODE_DIMENSIONS } from '../shared/constants'
+import { useGraphStore } from '../store/graphStore'
 
 const COLLISION_RADIUS: Record<string, number> = {
   company: NODE_DIMENSIONS.company.width / 2 + 20,
@@ -23,6 +24,30 @@ const LINK_DISTANCE = 220
 
 // Company nodes are pinned once alpha drops below this threshold.
 const SETTLE_THRESHOLD = 0.05
+
+// Containment force — radius scales with sqrt(nodeCount) so density stays constant.
+const CONTAIN_BASE = 75
+
+function makeContainForce(getNodeCount: () => number) {
+  let simNodes: SimNode[] = []
+  function force(alpha: number) {
+    const r = CONTAIN_BASE * Math.sqrt(Math.max(1, getNodeCount()))
+    for (const n of simNodes) {
+      const x = n.x ?? 0
+      const y = n.y ?? 0
+      const dist = Math.sqrt(x * x + y * y)
+      if (dist > r) {
+        const s = ((dist - r) / dist) * alpha * 0.8
+        n.vx = (n.vx ?? 0) - x * s
+        n.vy = (n.vy ?? 0) - y * s
+      }
+    }
+  }
+  force.initialize = (ns: SimNode[]) => {
+    simNodes = ns
+  }
+  return force
+}
 
 interface SimNode extends SimulationNodeDatum {
   id: string
@@ -43,7 +68,9 @@ export function useForceLayout(nodes: AppNode[], edges: AppEdge[]): AppNode[] {
   // Latches true once the initial layout settles — triggers company node pinning
   const settledRef = useRef(false)
 
-  const [positions, setPositions] = useState<PositionMap>(new Map())
+  // Lazy init: pre-populate from savedPositions so restored mounts never have an
+  // empty-positions window. On a fresh mount savedPositions is empty, same as new Map().
+  const [positions, setPositions] = useState<PositionMap>(() => new Map(useGraphStore.getState().savedPositions))
   // Mirror of positions used for change-threshold check — avoids re-renders when
   // alphaTarget keeps the sim ticking but nothing has moved visibly (>0.5px)
   const prevPositionsRef = useRef<Map<string, { x: number; y: number }>>(new Map())
@@ -58,7 +85,8 @@ export function useForceLayout(nodes: AppNode[], edges: AppEdge[]): AppNode[] {
           .radius((n) => COLLISION_RADIUS[n.nodeType] ?? FALLBACK_COLLISION)
           .strength(0.85),
       )
-      .force('center', forceCenter(0, 0).strength(0.04))
+      .force('center', forceCenter(0, 0).strength(0.08))
+      .force('contain', makeContainForce(() => simNodesArrayRef.current.length))
       .force(
         'link',
         forceLink<SimNode, SimLink>()
@@ -113,6 +141,7 @@ export function useForceLayout(nodes: AppNode[], edges: AppEdge[]): AppNode[] {
     simRef.current = sim
 
     return () => {
+      useGraphStore.getState().savePositions(prevPositionsRef.current)
       sim.stop()
       if (rafRef.current !== null) cancelAnimationFrame(rafRef.current)
       simRef.current = null
@@ -124,6 +153,7 @@ export function useForceLayout(nodes: AppNode[], edges: AppEdge[]): AppNode[] {
     const sim = simRef.current
     if (!sim) return
 
+    const savedPositions = useGraphStore.getState().savedPositions
     const existingMap = simNodesMapRef.current
     const existingArray = simNodesArrayRef.current
     const storeIds = new Set(nodes.map((n) => n.id))
@@ -136,19 +166,29 @@ export function useForceLayout(nodes: AppNode[], edges: AppEdge[]): AppNode[] {
       }
     }
 
-    // Add nodes new to the store — signal nodes spawn at their parent's position
+    // Add nodes new to the store.
+    // Priority: saved position → parent-relative spawn → random spawn.
     const newSimNodes: SimNode[] = []
     for (const node of nodes) {
       if (!existingMap.has(node.id)) {
-        let spawnX = (Math.random() - 0.5) * 80
-        let spawnY = (Math.random() - 0.5) * 80
+        let spawnX: number
+        let spawnY: number
 
-        const parentId = (node.data as { parentId?: string }).parentId
-        if (parentId) {
-          const parent = existingMap.get(parentId)
-          if (parent?.x !== undefined && parent?.y !== undefined) {
-            spawnX = parent.x + (Math.random() - 0.5) * 16
-            spawnY = parent.y + (Math.random() - 0.5) * 16
+        const savedPos = savedPositions.get(node.id)
+        if (savedPos) {
+          spawnX = savedPos.x
+          spawnY = savedPos.y
+        } else {
+          spawnX = (Math.random() - 0.5) * 80
+          spawnY = (Math.random() - 0.5) * 80
+
+          const parentId = (node.data as { parentId?: string }).parentId
+          if (parentId) {
+            const parent = existingMap.get(parentId)
+            if (parent?.x !== undefined && parent?.y !== undefined) {
+              spawnX = parent.x + (Math.random() - 0.5) * 16
+              spawnY = parent.y + (Math.random() - 0.5) * 16
+            }
           }
         }
 
@@ -179,18 +219,40 @@ export function useForceLayout(nodes: AppNode[], edges: AppEdge[]): AppNode[] {
     // parent's location before the first sim tick fires. Deferred via
     // queueMicrotask to satisfy the no-setState-in-effect lint rule while
     // still beating the RAF-based first tick (~16ms later).
+    // Idempotent: skips entries already in prev (restored mounts pre-populate
+    // positions via lazy useState init, so this is a no-op for known nodes).
     if (newSimNodes.length > 0) {
       const snapshot = newSimNodes.map((sn) => ({ id: sn.id, x: sn.x ?? 0, y: sn.y ?? 0 }))
       queueMicrotask(() => {
         setPositions((prev) => {
           const next = new Map(prev)
-          for (const { id, x, y } of snapshot) next.set(id, { x, y })
-          return next
+          let changed = false
+          for (const { id, x, y } of snapshot) {
+            if (!prev.has(id)) {
+              next.set(id, { x, y })
+              changed = true
+            }
+          }
+          return changed ? next : prev
         })
       })
     }
 
-    if (!hasInitializedRef.current) {
+    // Restored mount: savedPositions populated from a prior mount's cleanup.
+    // Pin company nodes immediately (already settled), start near-cold so
+    // the arrangement appears static rather than re-energizing.
+    const isRestoredMount = savedPositions.size > 0 && !hasInitializedRef.current
+    if (isRestoredMount) {
+      for (const sn of newSimNodes) {
+        if (sn.nodeType === 'company') {
+          sn.fx = sn.x
+          sn.fy = sn.y
+        }
+      }
+      settledRef.current = true
+      hasInitializedRef.current = true
+      sim.alpha(0.03).restart()
+    } else if (!hasInitializedRef.current) {
       // First load — full energy, company nodes drift into their natural positions
       hasInitializedRef.current = true
       sim.alpha(1.0).restart()

@@ -38,29 +38,52 @@ function GraphViewInner() {
   const simulatedNodes = useForceLayout(rawNodes, rawEdges)
 
   const [hoveredNodeId, setHoveredNodeId] = useState<string | null>(null)
-  const { fitView } = useReactFlow()
-  const initialFitDoneRef = useRef(false)
+  const { fitView, setViewport } = useReactFlow()
+  const cameraReadyRef = useRef(false)
 
   useEffect(() => {
     void initGraph()
   }, [initGraph])
 
-  // Fit view once after company nodes have positions — anchors viewport on
-  // the company layer at a comfortable zoom, blobs settle around them.
-  const companyNodes = useMemo(
-    () => simulatedNodes.filter((n) => n.type === 'company').map((n) => ({ id: n.id })),
-    [simulatedNodes],
-  )
+  // Reset cameraReadyRef on cleanup so Strict Mode's second run and any
+  // real remount re-apply the saved viewport rather than skipping.
   useEffect(() => {
-    if (companyNodes.length > 0 && !initialFitDoneRef.current) {
-      initialFitDoneRef.current = true
-      const timer = setTimeout(
-        () => fitView({ nodes: companyNodes, duration: 700, padding: 0.5 }),
-        120,
-      )
-      return () => clearTimeout(timer)
+    return () => {
+      console.log('[cam] unmount — savedViewport at cleanup:', useGraphStore.getState().savedViewport)
+      cameraReadyRef.current = false
     }
-  }, [companyNodes, fitView])
+  }, [])
+
+  // Camera setup: gate on simulatedNodes so nodes have positions before applying.
+  // Restored mount → setViewport immediately (no DOM measurement needed, unlike fitView).
+  // Fresh load → fitView after 120ms (needs settled node bounds).
+  useEffect(() => {
+    if (simulatedNodes.length > 0 && !cameraReadyRef.current) {
+      cameraReadyRef.current = true
+      const saved = useGraphStore.getState().savedViewport
+      console.log('[cam] camera effect fired — savedViewport:', saved)
+      if (saved) {
+        console.log('[cam] restore branch — calling setViewport with:', saved)
+        setViewport(saved)
+      } else {
+        console.log('[cam] fitView branch — no savedViewport, calling fitView')
+        const timer = setTimeout(() => fitView({ duration: 700, padding: 0.4 }), 120)
+        return () => clearTimeout(timer)
+      }
+    }
+  }, [simulatedNodes, fitView, setViewport])
+
+  // Persist viewport on every pan/zoom end so savedViewport is always the
+  // live camera. This replaces the unmount-cleanup save, which was unreliable:
+  // the cleanup fired during Strict Mode's fake unmount before setViewport had
+  // rendered, causing getViewport() to return the default {0,0,1}.
+  const handleMoveEnd = useCallback(
+    (_: MouseEvent | TouchEvent, vp: { x: number; y: number; zoom: number }) => {
+      console.log('[cam] handleMoveEnd saving:', vp)
+      useGraphStore.getState().saveViewport(vp)
+    },
+    [],
+  )
 
   const onNodeMouseEnter: NodeMouseHandler = useCallback((_, node) => {
     if (node.type !== 'company') setHoveredNodeId(node.id)
@@ -86,6 +109,7 @@ function GraphViewInner() {
         edges={highlightedEdges}
         onNodeMouseEnter={onNodeMouseEnter}
         onNodeMouseLeave={onNodeMouseLeave}
+        onMoveEnd={handleMoveEnd}
         nodeTypes={nodeTypes}
         defaultEdgeOptions={defaultEdgeOptions}
         nodesDraggable={false}

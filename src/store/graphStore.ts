@@ -14,8 +14,12 @@ interface GraphState {
   edges: AppEdge[]
   loading: boolean
   selectedCompanyId: string | null
+  savedPositions: Map<string, { x: number; y: number }>
+  savedViewport: { x: number; y: number; zoom: number } | null
   initGraph: () => void
   selectCompany: (companyId: string | null) => void
+  savePositions: (positions: ReadonlyMap<string, { x: number; y: number }>) => void
+  saveViewport: (viewport: { x: number; y: number; zoom: number }) => void
 }
 
 function makeCompanyNode(company: Company): CompanyFlowNode {
@@ -35,6 +39,8 @@ export const useGraphStore = create<GraphState>((set, get) => ({
   edges: [],
   loading: false,
   selectedCompanyId: null,
+  savedPositions: new Map(),
+  savedViewport: null,
 
   async initGraph() {
     // Already initialized — skip fetch, preserves full state across navigation
@@ -112,5 +118,13 @@ export const useGraphStore = create<GraphState>((set, get) => ({
 
   selectCompany(companyId) {
     set((s) => ({ selectedCompanyId: s.selectedCompanyId === companyId ? null : companyId }))
+  },
+
+  savePositions(positions) {
+    set({ savedPositions: new Map(positions) })
+  },
+
+  saveViewport(viewport) {
+    set({ savedViewport: viewport })
   },
 }))

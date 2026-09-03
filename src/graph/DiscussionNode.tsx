@@ -23,7 +23,11 @@ function DiscussionNode({ id, data }: NodeProps<DiscussionNodeData>) {
   const diameter = blobSize(data.item.publishedAt)
 
   return (
-    <div style={{ width: 28, height: 28, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+    <div
+      style={{ width: 28, height: 28, display: 'flex', alignItems: 'center', justifyContent: 'center' }}
+      onMouseEnter={() => setHovered(true)}
+      onMouseLeave={() => setHovered(false)}
+    >
       <NodeTooltip
         visible={hovered}
         headline={data.item.title}
@@ -38,8 +42,6 @@ function DiscussionNode({ id, data }: NodeProps<DiscussionNodeData>) {
           scale: hovered ? 1.15 : 1,
         }}
         transition={{ ...ANIMATION.reveal, delay: data.animationDelay }}
-        onMouseEnter={() => setHovered(true)}
-        onMouseLeave={() => setHovered(false)}
         onClick={() => {
           selectCompany(data.parentId)
           openPanel(id)

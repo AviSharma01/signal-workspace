@@ -25,7 +25,11 @@ function NewsNode({ id, data }: NodeProps<NewsNodeData>) {
   const diameter = blobSize(data.item.publishedAt)
 
   return (
-    <div style={{ width: 28, height: 28, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+    <div
+      style={{ width: 28, height: 28, display: 'flex', alignItems: 'center', justifyContent: 'center' }}
+      onMouseEnter={() => setHovered(true)}
+      onMouseLeave={() => setHovered(false)}
+    >
       <NodeTooltip
         visible={hovered}
         headline={data.item.headline}
@@ -40,8 +44,6 @@ function NewsNode({ id, data }: NodeProps<NewsNodeData>) {
           scale: hovered ? 1.15 : 1,
         }}
         transition={{ ...ANIMATION.reveal, delay: data.animationDelay }}
-        onMouseEnter={() => setHovered(true)}
-        onMouseLeave={() => setHovered(false)}
         onClick={() => {
           selectCompany(data.parentId)
           openPanel(id)
