@@ -23,9 +23,19 @@ dist-ssr
 *.sln
 *.sw?
 
-**/claude.md
-agents.md
-**/agent_spec.md
+/.claude/settings.local.json
+
+**/CLAUDE.md
+**/AGENTS.md
+**/AGENT_SPEC.md
+
+# Local Signal documentation (intentionally not tracked)
+/CONTEXT.md
+/docs/implementation-status.md
+/docs/data/disclosure-characteristics.md
+/docs/frontend/graph-v1-notes.md
+/docs/specs/investigation-agent-v1.md
+/docs/archive/workspace-v1.md
 
 .env
 server/signal.db
