@@ -1,9 +1,10 @@
-import { BrowserRouter, Routes, Route, useLocation } from 'react-router-dom'
+import { BrowserRouter, Routes, Route, useLocation, useNavigate } from 'react-router-dom'
 import { AnimatePresence, motion } from 'framer-motion'
 import GraphView from './graph/GraphView'
 import SidePanel from './panel/SidePanel'
 import DetailPage from './detail/DetailPage'
-import { BG_PRIMARY, ANIMATION } from './shared/constants'
+import DisclosureEvidencePage from './detail/DisclosureEvidencePage'
+import { ANIMATION, BG_PRIMARY } from './shared/constants'
 
 const pageFade = {
   initial: { opacity: 0 },
@@ -13,13 +14,18 @@ const pageFade = {
 }
 
 function GraphLayout() {
+  const navigate = useNavigate()
+
   return (
-    <motion.div
-      {...pageFade}
-      style={{ position: 'relative', width: '100%', height: '100vh' }}
-    >
+    <motion.div {...pageFade} style={{ position: 'relative', width: '100%', height: '100vh' }}>
       <GraphView />
       <SidePanel />
+      <button
+        onClick={() => navigate('/disclosures')}
+        className="absolute bottom-4 left-4 cursor-pointer rounded-sm border border-[#2a2a2e] bg-[#17171a] px-2.5 py-1.5 text-[11px] text-[#6b6b7b]"
+      >
+        Disclosure evidence
+      </button>
     </motion.div>
   )
 }
@@ -39,6 +45,7 @@ function AnimatedRoutes() {
             </motion.div>
           }
         />
+        <Route path="/disclosures" element={<DisclosureEvidencePage />} />
       </Routes>
     </AnimatePresence>
   )

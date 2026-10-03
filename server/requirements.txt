@@ -4,3 +4,4 @@ yfinance
 apscheduler
 python-dotenv
 anthropic
+pdfplumber==0.11.9
