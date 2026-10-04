@@ -172,3 +172,21 @@ CREATE INDEX IF NOT EXISTS idx_disclosure_normalizations_row
     ON disclosure_normalizations(row_occurrence_id, normalized_at);
 CREATE INDEX IF NOT EXISTS idx_disclosure_filing_evidence_filing
     ON disclosure_source_filing_evidence(source_filing_record_id, observed_at);
+
+-- Application-owned, append-only interpretations; raw disclosure evidence is unchanged.
+CREATE TABLE IF NOT EXISTS event_evidence_assertions (
+    id TEXT PRIMARY KEY,
+    population TEXT NOT NULL CHECK (population IN ('real', 'demo', 'test', 'evaluation')),
+    kind TEXT NOT NULL,
+    observed_at INTEGER NOT NULL,
+    assertion_json TEXT NOT NULL
+);
+CREATE INDEX IF NOT EXISTS idx_event_assertions_population
+    ON event_evidence_assertions(population, observed_at);
+
+CREATE TABLE IF NOT EXISTS event_recorded_views (
+    id TEXT PRIMARY KEY,
+    population TEXT NOT NULL CHECK (population IN ('real', 'demo', 'test', 'evaluation')),
+    computed_at INTEGER NOT NULL,
+    view_json TEXT NOT NULL
+);
