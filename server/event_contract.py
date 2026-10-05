@@ -106,6 +106,13 @@ class Correction(Assertion):
     occurrence_id: str
     fields: Fields
     standing: Literal["supported", "withdrawn", "unresolved"] | None = None
+    standing_resolution: Literal["reinstatement", "withdrawal_misattributed"] | None = None
+
+    @model_validator(mode="after")
+    def explicit_standing_resolution(self):
+        if self.standing_resolution is not None and self.standing != "supported":
+            raise ValueError("reinstatement evidence must explicitly support standing")
+        return self
 
 
 class Session(Command):

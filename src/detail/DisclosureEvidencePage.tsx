@@ -1,5 +1,6 @@
 import { useNavigate } from 'react-router-dom'
 import { useDisclosureEvidence } from '../data/useDisclosureEvidence'
+import WatchEventsPanel from './WatchEventsPanel'
 
 const sectionClass = 'mt-3.5 rounded-md border border-[#2a2a2e] bg-[#17171a] p-4'
 const labelClass = 'text-[11px] uppercase tracking-[0.06em] text-[#6b6b7b]'
@@ -25,6 +26,8 @@ export default function DisclosureEvidencePage() {
 
         {loading && <p className="text-[#6b6b7b]">Loading retained evidence…</p>}
         {error && <p className="text-[#e5534b]">{error}</p>}
+
+        <WatchEventsPanel />
 
         {readiness && (
           <section className="grid grid-cols-2 gap-3">

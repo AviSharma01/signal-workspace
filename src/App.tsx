@@ -24,7 +24,7 @@ function GraphLayout() {
         onClick={() => navigate('/disclosures')}
         className="absolute bottom-4 left-4 cursor-pointer rounded-sm border border-[#2a2a2e] bg-[#17171a] px-2.5 py-1.5 text-[11px] text-[#6b6b7b]"
       >
-        Disclosure evidence
+        Watch Events & evidence
       </button>
     </motion.div>
   )

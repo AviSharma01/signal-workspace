@@ -188,5 +188,40 @@ CREATE TABLE IF NOT EXISTS event_recorded_views (
     id TEXT PRIMARY KEY,
     population TEXT NOT NULL CHECK (population IN ('real', 'demo', 'test', 'evaluation')),
     computed_at INTEGER NOT NULL,
-    view_json TEXT NOT NULL
+  view_json TEXT NOT NULL
 );
+
+-- Application-owned Watch Event admission. The admission snapshot is immutable;
+-- later lifecycle assessments are append-only history.
+CREATE TABLE IF NOT EXISTS watch_events (
+  id TEXT PRIMARY KEY,
+  population TEXT NOT NULL CHECK (population IN ('real', 'demo', 'test', 'evaluation')),
+  event_id TEXT NOT NULL,
+  occurrence_ids_json TEXT NOT NULL,
+  discovered_at INTEGER NOT NULL,
+  official_evidence_first_observed_at INTEGER NOT NULL,
+  verified_at INTEGER NOT NULL,
+  admitted_at INTEGER NOT NULL,
+  admission_event_view_json TEXT NOT NULL,
+  UNIQUE (population, event_id)
+);
+CREATE INDEX IF NOT EXISTS idx_watch_events_population_admitted
+  ON watch_events(population, admitted_at DESC);
+
+CREATE TABLE IF NOT EXISTS watch_lifecycle_history (
+  id TEXT PRIMARY KEY,
+  watch_event_id TEXT NOT NULL,
+  evaluated_at INTEGER NOT NULL,
+  persisted_at INTEGER NOT NULL,
+  trigger TEXT NOT NULL CHECK (trigger IN (
+    'admission', 'evidence_change', 'startup_recovery',
+    'known_expiry', 'pre_active_action'
+  )),
+  policy_version TEXT NOT NULL,
+  transition_reasons_json TEXT NOT NULL,
+  source_event_view_json TEXT NOT NULL,
+  assessment_json TEXT NOT NULL,
+  FOREIGN KEY (watch_event_id) REFERENCES watch_events(id)
+);
+CREATE INDEX IF NOT EXISTS idx_watch_history_event_evaluated
+  ON watch_lifecycle_history(watch_event_id, evaluated_at);

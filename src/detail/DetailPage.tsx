@@ -171,6 +171,13 @@ export default function DetailPage() {
         {/* Spacer */}
         <div style={{ flex: 1 }} />
 
+        <button
+          onClick={() => navigate('/disclosures')}
+          className="cursor-pointer border-0 bg-transparent text-[11px] text-[#6b6b7b]"
+        >
+          Watch Events & evidence
+        </button>
+
         {/* Chart type toggle */}
         <div style={{ display: 'flex', gap: 2 }}>
           {(['candlestick', 'line'] as const).map((type) => (

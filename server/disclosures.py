@@ -70,6 +70,14 @@ class DisclosureApplication:
     def __init__(self, connection_factory: ConnectionFactory):
         self._connection_factory = connection_factory
 
+    def _reevaluate_watches(self, population: str) -> None:
+        from watch_events import WatchApplication
+        watch = WatchApplication(self._connection_factory)
+        watch.reevaluate_all(population=population, trigger="evidence_change")
+        if population == "real":
+            from jobs.watch_events import schedule_watch_expiry
+            schedule_watch_expiry(application=watch)
+
     def ingest_supporting_retrieval(self, retrieval: RetrievedArtifact) -> dict[str, Any]:
         if retrieval.content is None or retrieval.availability_status != "available":
             raise ValueError("supporting payload ingestion requires retrieved content")
@@ -90,6 +98,7 @@ class DisclosureApplication:
                 sourceFilingsDiscovered=0,
                 rowOccurrencesCreated=0,
             )
+        self._reevaluate_watches(retrieval.population)
         return recorded
 
     def ingest_house_index(
@@ -275,6 +284,7 @@ class DisclosureApplication:
                     (str(uuid.uuid4()), stored["id"], extraction_id, int(time.time() * 1000),
                      "partial" if issues else "succeeded", json.dumps(normalized), json.dumps(issues)),
                 )
+        self._reevaluate_watches(population)
         return {"extractionId": extraction_id, "parseStatus": parse_status,
                 "sourceFilingsDiscovered": 0, "rowOccurrencesCreated": created}
 
@@ -833,6 +843,7 @@ class DisclosureApplication:
                         normalized_at_ms=extracted_at_ms,
                     )
 
+        self._reevaluate_watches(population)
         return {
             "extractionId": extraction_id,
             "parseStatus": extraction_status,

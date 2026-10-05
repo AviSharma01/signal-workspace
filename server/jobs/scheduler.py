@@ -6,6 +6,7 @@ from jobs.prices import fetch_prices
 from jobs.news import fetch_news
 from jobs.discussion import fetch_discussion
 from jobs.disclosures import run_daily_disclosure_discovery, run_startup_disclosure_catch_up
+from jobs.watch_events import run_startup_watch_recovery, run_watch_recovery_check
 
 _scheduler = BackgroundScheduler()
 
@@ -15,6 +16,23 @@ def start_scheduler() -> None:
     _scheduler.add_job(fetch_prices, "interval", minutes=15, next_run_time=now)
     _scheduler.add_job(fetch_news, "interval", minutes=30, next_run_time=now)
     _scheduler.add_job(fetch_discussion, "interval", minutes=60, next_run_time=now)
+    _scheduler.add_job(
+        run_watch_recovery_check,
+        "interval",
+        minutes=1,
+        id="watch-recovery-check",
+        replace_existing=True,
+        max_instances=1,
+        coalesce=True,
+    )
+    _scheduler.add_job(
+        run_startup_watch_recovery,
+        "date",
+        run_date=now,
+        id="watch-startup-recovery",
+        replace_existing=True,
+        misfire_grace_time=None,
+    )
     _scheduler.add_job(
         run_startup_disclosure_catch_up,
         "date",

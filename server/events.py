@@ -110,6 +110,29 @@ def occurrence_groups(rows: dict, versions: dict, relations: list[dict]) -> tupl
     return groups, conflicts
 
 
+def original_occurrence_ids(occurrence_ids: list[str], relations: list[dict]) -> set[str]:
+    """Original representations under the current verified #28 relationships.
+
+    A same-occurrence copy of an amendment is still an amendment representation,
+    not independent evidence of the original occurrence's first publication.
+    """
+    members = set(occurrence_ids)
+    amendments = {relation["right_occurrence_id"] for relation in relations
+                  if relation["status"] == "verified" and relation["relation"] == "amendment"
+                  and relation["right_occurrence_id"] in members}
+    copies = [relation for relation in relations if relation["status"] == "verified"
+              and relation["relation"] == "same_occurrence"
+              and {relation["left_occurrence_id"], relation["right_occurrence_id"]} <= members]
+    while True:
+        previous = set(amendments)
+        for relation in copies:
+            pair = {relation["left_occurrence_id"], relation["right_occurrence_id"]}
+            if pair & amendments:
+                amendments.update(pair)
+        if amendments == previous:
+            return members - amendments
+
+
 def filing_coverage(events: list[dict], versions: dict, rows: dict) -> list[dict]:
     """Explicit counting units and minima, never filing-size eligibility rules."""
     event_for_row = {row_id: event for event in events for row_id in event["occurrenceIds"]}
@@ -242,6 +265,14 @@ class EventApplication:
         with self._connection_factory() as conn:
             conn.execute("INSERT INTO event_evidence_assertions VALUES (?, ?, ?, ?, ?)",
                          (fact_id, population, command.kind, now, json.dumps(fact, sort_keys=True)))
+        # Source evidence commits first; lifecycle persistence is application-owned.
+        # A crash between these commits is recovered at startup, without backdating.
+        from watch_events import WatchApplication
+        watch_application = WatchApplication(self._connection_factory, self._clock)
+        watch_application.reevaluate_all(population=population, trigger="evidence_change")
+        if population == "real":
+            from jobs.watch_events import schedule_watch_expiry
+            schedule_watch_expiry(application=watch_application)
         return dict(fact, id=fact_id, observed_at=now)
 
     def derive(self, *, population: str, perspective: str, as_of: int,
@@ -346,9 +377,8 @@ class EventApplication:
             official_rows = [row for row in members if versions[row["version_id"]]["artifact"]["sourceAuthority"] == "official"]
             # Amendments identify the original explicitly; later representations cannot
             # replace its source fields even in a recomputation.
-            amended_right = {relation["right_occurrence_id"] for relation in by_pair.values()
-                             if relation["status"] == "verified" and relation["relation"] == "amendment"}
-            base_rows = [row for row in official_rows if row["id"] not in amended_right] or official_rows or members
+            originals = original_occurrence_ids(occurrence_ids, list(by_pair.values()))
+            base_rows = [row for row in official_rows if row["id"] in originals] or official_rows or members
             base = min(base_rows, key=lambda row: (bounds[row["version_id"]], occurrence_order(row["id"])))
             event_claims = [claim for claim in claims if claim["artifact_version_id"] == base["version_id"]]
             supported = [claim for claim in event_claims if (supported_interval := publication_interval(claim)) is not None
