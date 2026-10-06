@@ -225,3 +225,23 @@ CREATE TABLE IF NOT EXISTS watch_lifecycle_history (
 );
 CREATE INDEX IF NOT EXISTS idx_watch_history_event_evaluated
   ON watch_lifecycle_history(watch_event_id, evaluated_at);
+
+-- Application-owned Analysis artifacts; runs and their exact inputs are append-only.
+CREATE TABLE IF NOT EXISTS analysis_market_inputs (
+  id TEXT PRIMARY KEY,
+  population TEXT NOT NULL CHECK (population IN ('real', 'test', 'evaluation')),
+  evidence_class TEXT NOT NULL CHECK (evidence_class IN ('real_candidate', 'synthetic')),
+  report_json TEXT NOT NULL,
+  CHECK (population != 'real' OR evidence_class = 'real_candidate')
+);
+CREATE TABLE IF NOT EXISTS analysis_runs (
+  id TEXT PRIMARY KEY,
+  population TEXT NOT NULL CHECK (population IN ('real', 'test', 'evaluation')),
+  readiness_scope TEXT NOT NULL,
+  market_input_id TEXT NOT NULL,
+  calculated_at INTEGER NOT NULL,
+  run_json TEXT NOT NULL,
+  FOREIGN KEY (market_input_id) REFERENCES analysis_market_inputs(id),
+  CHECK ((population = 'real' AND readiness_scope = 'production') OR
+         (population IN ('test', 'evaluation') AND readiness_scope != 'production'))
+);

@@ -301,7 +301,7 @@ def _case_field_valid(value: Any, required_type: Any) -> bool:
     return type(value) is required_type
 
 
-def _snapshot_problems(snapshot: MarketDataSnapshot) -> dict[str, list[str]]:
+def snapshot_problems(snapshot: MarketDataSnapshot) -> dict[str, list[str]]:
     """Validate only approved fields; unknown semantics are never invented."""
     problems: dict[str, list[str]] = {}
 
@@ -483,7 +483,7 @@ class MarketConformanceApplication:
                         status, details = 'fail', ['candidate observation disagrees with independent expectation']
                     for ref in refs:
                         snapshot = evidence.snapshots[ref]
-                        issues = _snapshot_problems(snapshot)
+                        issues = snapshot_problems(snapshot)
                         details.extend(issues.get(gate, []))
                         # Every passing case must retain complete source provenance.
                         details.extend(issues.get('provenance_completeness', []) if gate != 'provenance_completeness' else [])
@@ -540,7 +540,7 @@ class MarketConformanceApplication:
                         supported_identities = [
                             _mapping(evidence.snapshots[ref].semantics).get('security_identity')
                             for ref in refs
-                            if not _snapshot_problems(evidence.snapshots[ref]).get('historical_security_identity')
+                            if not snapshot_problems(evidence.snapshots[ref]).get('historical_security_identity')
                         ]
                         if any(identity not in scope.securities or identity not in supported_identities
                                for identity in (old_security, new_security)):

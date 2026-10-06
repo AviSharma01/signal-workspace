@@ -1,4 +1,4 @@
-import { useNavigate } from 'react-router-dom'
+import { Link, useNavigate } from 'react-router-dom'
 import { useDisclosureEvidence } from '../data/useDisclosureEvidence'
 import CapabilityNotice from '../capabilities/CapabilityNotice'
 import { useCapabilities } from '../data/useCapabilities'
@@ -34,6 +34,9 @@ export default function DisclosureEvidencePage() {
           ← Back
         </button>
         <h1 className="mb-1.5 mt-4.5 text-xl">Disclosure evidence</h1>
+        <Link to="/analysis" className="text-xs text-[#8b8b98]">
+          Analysis outcomes →
+        </Link>
         <p className="mb-5 mt-0 text-[13px] text-[#6b6b7b]">
           Retained source material, retrieval history, extraction status, and normalized
           interpretations.

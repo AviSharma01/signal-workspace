@@ -4,6 +4,7 @@ import GraphView from './graph/GraphView'
 import SidePanel from './panel/SidePanel'
 import DetailPage from './detail/DetailPage'
 import DisclosureEvidencePage from './detail/DisclosureEvidencePage'
+import AnalysisPage from './detail/AnalysisPage'
 import { ANIMATION, BG_PRIMARY } from './shared/constants'
 
 const pageFade = {
@@ -46,6 +47,7 @@ function AnimatedRoutes() {
           }
         />
         <Route path="/disclosures" element={<DisclosureEvidencePage />} />
+        <Route path="/analysis" element={<AnalysisPage />} />
       </Routes>
     </AnimatePresence>
   )
