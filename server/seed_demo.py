@@ -1,23 +1,22 @@
 """
 seed_demo.py - Demo/eval fixtures for the Signal Investigation Agent.
 
-Writes controlled, deterministic market scenarios into the existing SQLite DB
-so the anomaly trigger fires on known events and the agent has ground-truth
-answers to investigate. This single file is BOTH the demo dataset and the eval
-fixture - the eval just asserts the agent reaches each ticker's known driver.
+Retains deterministic synthetic market scenarios for explicitly opted-in data
+demos, isolated from normal queries by population. These legacy fixtures do
+not establish V2 readiness or produce investigation Findings.
 
 SCENARIOS (all events land on the final bar, END_DATE):
     NMBS              -> news        (clear causal headline same session)
     ORCH/HLIX/VRTA    -> sector      (peers all drop together, no news)
     DRFT              -> unexplained (trips trigger, but nothing explains it)
 
-SAFETY: this script ONLY touches the invented tickers in DEMO_TICKERS. It never
-reads, modifies, or deletes the real watchlist (AAPL/MSFT/GOOGL/AMZN/NVDA) or
-any other rows. It is idempotent - re-running clears and rewrites only the demo
-tickers, so your real data is always left intact.
+SAFETY: requires explicit demo opt-in, marks all context rows as demo, and
+refuses to overwrite non-demo records. Default application queries exclude
+these fixtures; browse with population=demo. The V1 investigation runtime is
+disabled; these scenarios remain a data demo, not a V2 investigation eval.
 
 Run from the server/ directory (same place you run uvicorn):
-    python seed_demo.py
+    python seed_demo.py --demo
 """
 
 from __future__ import annotations
@@ -26,12 +25,13 @@ import os
 import sys
 import math
 import random
+import argparse
 from datetime import datetime, timedelta, timezone
 
 # Make `from db.database import ...` resolve when run as `python seed_demo.py`
 # from inside server/ (same import pattern the routers and jobs use).
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
-from db.database import get_connection  # noqa: E402
+from db.database import get_connection, init_db, LEGACY_DEMO_COMPANIES  # noqa: E402
 
 
 # ---------------------------------------------------------------------------
@@ -50,7 +50,7 @@ BASELINE_STD = 0.008       # 0.8% daily vol on calm days (keeps baseline quiet)
 INTRADAY_SPREAD = 0.004    # high/low bracket around open/close
 VOL_NOISE = 0.10           # +/-10% volume jitter on calm days
 
-DEMO_TICKERS = ["NMBS", "ORCH", "HLIX", "VRTA", "DRFT"]
+DEMO_TICKERS = list(LEGACY_DEMO_COMPANIES)
 
 # id, name, sector, start_price, base_volume
 COMPANIES = [
@@ -168,7 +168,9 @@ def trigger_check(closes: list[float], volumes: list[int]) -> tuple[float, float
 # ---------------------------------------------------------------------------
 # Seed
 # ---------------------------------------------------------------------------
-def seed() -> None:
+def seed(*, demo: bool = False) -> None:
+    if not demo:
+        raise ValueError("explicit_demo_opt_in_required")
     rng = random.Random(RANDOM_SEED)
     days = trading_days(END_DATE, N_DAYS)
     report: dict[str, tuple[float, float]] = {}
@@ -177,14 +179,25 @@ def seed() -> None:
         cur = conn.cursor()
         ph = ",".join("?" for _ in DEMO_TICKERS)
 
+        if cur.execute(
+            f"SELECT id FROM companies WHERE id IN ({ph}) AND population != 'demo'",
+            DEMO_TICKERS,
+        ).fetchone():
+            raise ValueError("demo_company_population_conflict")
+        for table in ("news_items", "discussion_items"):
+            if cur.execute(
+                f"SELECT id FROM {table} WHERE company_id IN ({ph}) AND population != 'demo'",
+                DEMO_TICKERS,
+            ).fetchone():
+                raise ValueError("demo_context_population_conflict")
+
         # SAFETY: clear ONLY demo tickers. Real watchlist rows are never touched.
         cur.execute(f"DELETE FROM price_points     WHERE company_id IN ({ph})", DEMO_TICKERS)
         cur.execute(f"DELETE FROM news_items        WHERE company_id IN ({ph})", DEMO_TICKERS)
         cur.execute(f"DELETE FROM discussion_items  WHERE company_id IN ({ph})", DEMO_TICKERS)
-        cur.execute(f"DELETE FROM companies         WHERE id         IN ({ph})", DEMO_TICKERS)
-
         cur.executemany(
-            "INSERT INTO companies (id, name, sector) VALUES (?, ?, ?)",
+            "INSERT INTO companies (id, name, sector, population) VALUES (?, ?, ?, 'demo') "
+            "ON CONFLICT(id) DO UPDATE SET name = excluded.name, sector = excluded.sector",
             [(c[0], c[1], c[2]) for c in COMPANIES],
         )
 
@@ -202,8 +215,8 @@ def seed() -> None:
 
         cur.executemany(
             "INSERT INTO news_items "
-            "(id, company_id, headline, summary, source, url, published_at) "
-            "VALUES (?, ?, ?, ?, ?, ?, ?)",
+            "(id, company_id, headline, summary, source, url, published_at, population) "
+            "VALUES (?, ?, ?, ?, ?, ?, ?, 'demo')",
             [(n["id"], n["company_id"], n["headline"], n["summary"],
               n["source"], n["url"], n["published_at"]) for n in news_rows(days)],
         )
@@ -228,4 +241,8 @@ def seed() -> None:
 
 
 if __name__ == "__main__":
-    seed()
+    parser = argparse.ArgumentParser(description="Seed isolated legacy demo context (V1 investigations disabled).")
+    parser.add_argument("--demo", action="store_true", required=True, help="Explicitly opt in to demo fixtures")
+    parser.parse_args()
+    init_db()
+    seed(demo=True)

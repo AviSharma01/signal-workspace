@@ -1,7 +1,8 @@
 CREATE TABLE IF NOT EXISTS companies (
   id TEXT PRIMARY KEY,
   name TEXT NOT NULL,
-  sector TEXT
+  sector TEXT,
+  population TEXT NOT NULL DEFAULT 'real' CHECK (population IN ('real', 'demo', 'test', 'evaluation'))
 );
 
 CREATE TABLE IF NOT EXISTS price_points (
@@ -25,6 +26,7 @@ CREATE TABLE IF NOT EXISTS news_items (
   source TEXT,
   url TEXT,
   published_at INTEGER,
+  population TEXT NOT NULL DEFAULT 'real' CHECK (population IN ('real', 'demo', 'test', 'evaluation')),
   FOREIGN KEY (company_id) REFERENCES companies(id)
 );
 
@@ -36,6 +38,7 @@ CREATE TABLE IF NOT EXISTS discussion_items (
   source TEXT,
   url TEXT,
   published_at INTEGER,
+  population TEXT NOT NULL DEFAULT 'real' CHECK (population IN ('real', 'demo', 'test', 'evaluation')),
   FOREIGN KEY (company_id) REFERENCES companies(id)
 );
 

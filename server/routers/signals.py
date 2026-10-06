@@ -1,4 +1,5 @@
 import time
+from typing import Literal
 
 from fastapi import APIRouter, HTTPException
 
@@ -10,33 +11,35 @@ router = APIRouter(prefix="/api")
 
 
 @router.get("/signals/{company_id}")
-def get_signals(company_id: str) -> dict:
+def get_signals(company_id: str, population: Literal["real", "demo"] = "real") -> dict:
     cid = company_id.upper()
 
     with get_connection() as conn:
-        if not conn.execute("SELECT id FROM companies WHERE id = ?", (cid,)).fetchone():
+        if not conn.execute(
+            "SELECT id FROM companies WHERE id = ? AND population = ?", (cid, population)
+        ).fetchone():
             raise HTTPException(status_code=404, detail="Company not found")
 
         news_rows = conn.execute(
             """
             SELECT id, company_id, headline, summary, source, url, published_at
             FROM news_items
-            WHERE company_id = ?
+            WHERE company_id = ? AND population = ?
             ORDER BY published_at DESC
             LIMIT 10
             """,
-            (cid,),
+            (cid, population),
         ).fetchall()
 
         disc_rows = conn.execute(
             """
             SELECT id, company_id, title, summary, source, url, published_at
             FROM discussion_items
-            WHERE company_id = ?
+            WHERE company_id = ? AND population = ?
             ORDER BY published_at DESC
             LIMIT 10
             """,
-            (cid,),
+            (cid, population),
         ).fetchall()
 
     news = [
