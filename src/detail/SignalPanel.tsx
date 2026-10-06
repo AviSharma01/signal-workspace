@@ -2,7 +2,15 @@ import { motion } from 'framer-motion'
 import { useNavigate } from 'react-router-dom'
 import type { NewsItem, DiscussionItem } from '../shared/types'
 import type { Company } from '../shared/types'
-import { ANIMATION, BG_SURFACE, BLOB_RELATED, BORDER, TEXT_MUTED, TEXT_PRIMARY } from '../shared/constants'
+import type { ResultStatus } from '../capabilities/types'
+import {
+  ANIMATION,
+  BG_SURFACE,
+  BLOB_RELATED,
+  BORDER,
+  TEXT_MUTED,
+  TEXT_PRIMARY,
+} from '../shared/constants'
 import SignalItem from './SignalItem'
 
 interface SignalPanelProps {
@@ -11,6 +19,10 @@ interface SignalPanelProps {
   activeSignalId: string | null
   onSignalSelect: (signalId: string) => void
   loading: boolean
+  classification: 'legacy_v1_context' | null
+  detail: string | null
+  result: ResultStatus | null
+  error: string | null
   relatedCompanies: Company[]
 }
 
@@ -77,6 +89,10 @@ export default function SignalPanel({
   activeSignalId,
   onSignalSelect,
   loading,
+  classification,
+  detail,
+  result,
+  error,
   relatedCompanies,
 }: SignalPanelProps) {
   const navigate = useNavigate()
@@ -96,6 +112,22 @@ export default function SignalPanel({
         overflowY: 'auto',
       }}
     >
+      <div style={{ padding: '10px 16px', borderBottom: `1px solid ${BORDER}`, flexShrink: 0 }}>
+        <div style={{ fontSize: 10, color: TEXT_MUTED, textTransform: 'uppercase' }}>
+          {classification === 'legacy_v1_context'
+            ? 'Legacy V1 context · not V2 capability'
+            : 'Context status'}
+        </div>
+        {result && (
+          <div style={{ marginTop: 4, fontSize: 11, color: TEXT_MUTED }}>
+            Result: {result.state}
+          </div>
+        )}
+        {detail && <div style={{ marginTop: 4, fontSize: 11, color: TEXT_MUTED }}>{detail}</div>}
+        {error && (
+          <div style={{ marginTop: 4, fontSize: 11, color: '#e5534b' }}>Request error: {error}</div>
+        )}
+      </div>
       {loading ? (
         <>
           <SectionLabel label="News" />
@@ -139,8 +171,15 @@ export default function SignalPanel({
           {relatedCompanies.length > 0 && (
             <>
               <SectionLabel label="Related" />
-              <div style={{ padding: '4px 16px 16px', display: 'flex', flexDirection: 'column', gap: 2 }}>
-                {relatedCompanies.map((c) => (
+              <div
+                style={{
+                  padding: '4px 16px 16px',
+                  display: 'flex',
+                  flexDirection: 'column',
+                  gap: 2,
+                }}
+              >
+                {relatedCompanies.map(c => (
                   <button
                     key={c.id}
                     onClick={() => navigate(`/company/${c.id}`)}
@@ -157,15 +196,25 @@ export default function SignalPanel({
                       width: '100%',
                     }}
                   >
-                    <div style={{
-                      width: 8,
-                      height: 8,
-                      borderRadius: '50%',
-                      backgroundColor: BLOB_RELATED,
-                      opacity: 0.8,
-                      flexShrink: 0,
-                    }} />
-                    <span style={{ fontSize: 11, color: TEXT_MUTED, fontFamily: 'monospace', letterSpacing: '0.06em', flexShrink: 0 }}>
+                    <div
+                      style={{
+                        width: 8,
+                        height: 8,
+                        borderRadius: '50%',
+                        backgroundColor: BLOB_RELATED,
+                        opacity: 0.8,
+                        flexShrink: 0,
+                      }}
+                    />
+                    <span
+                      style={{
+                        fontSize: 11,
+                        color: TEXT_MUTED,
+                        fontFamily: 'monospace',
+                        letterSpacing: '0.06em',
+                        flexShrink: 0,
+                      }}
+                    >
                       {c.id}
                     </span>
                     <span style={{ fontSize: 13, color: TEXT_PRIMARY, fontWeight: 500 }}>

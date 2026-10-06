@@ -9,9 +9,11 @@ from typing import Literal
 from fastapi import APIRouter, Depends, HTTPException, Query, status
 from pydantic import BaseModel, ConfigDict, Field, field_validator
 
+from capabilities import CapabilityApplication, result_state
 from db.database import get_connection
 from disclosure_sources import HouseDisclosureSource, house_filing_url, house_index_url
 from disclosures import DisclosureApplication, RetrievedArtifact
+from routers.capabilities import capability_json, get_capability_application
 
 
 router = APIRouter(prefix="/api/disclosures", tags=["disclosures"])
@@ -136,10 +138,20 @@ def retrieve_house_filing(
 def get_evidence(
     population: str | None = Query(default=None),
     application: DisclosureApplication = Depends(get_disclosure_application),
+    capabilities: CapabilityApplication = Depends(get_capability_application),
 ) -> dict:
     if population is not None:
         raise HTTPException(status_code=422, detail="the public API exposes only the real population")
-    return application.query_evidence(population="real")
+    evidence = application.query_evidence(population="real")
+    capability = capabilities.get("disclosure.evidence_retention")
+    state, detail = application.assess_evidence_result(evidence)
+    return {
+        **evidence,
+        "capability": capability_json(capability),
+        "result": capability_json(
+            result_state(state, detail, evaluated_at=capability["evaluated_at"])
+        ),
+    }
 
 
 @router.get("/artifacts/{artifact_id}/versions/{version_id}")
@@ -187,4 +199,13 @@ def reprocess_artifact_version(
 def get_readiness(
     application: DisclosureApplication = Depends(get_disclosure_application),
 ) -> dict:
-    return application.query_chamber_readiness(population="real")
+    readiness = application.query_chamber_readiness(population="real")
+    evaluated_at = max(item["evaluated_at"] for item in readiness.values())
+    return capability_json({
+        **readiness,
+        "result": result_state(
+            "successful",
+            "Chamber readiness gates were evaluated independently of source result records.",
+            evaluated_at=evaluated_at,
+        ),
+    })

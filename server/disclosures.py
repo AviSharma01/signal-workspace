@@ -1178,21 +1178,64 @@ class DisclosureApplication:
 
         def unavailable(chamber: str) -> dict[str, Any]:
             return {
+                "id": f"disclosure.{chamber}",
+                "name": f"{chamber.title()} disclosure readiness",
                 "chamber": chamber,
                 "availability": "unavailable",
-                "reasonCode": "disclosure_source_validation_incomplete",
+                "reason_code": "disclosure_source_validation_incomplete",
+                "reason_codes": ["disclosure_source_validation_incomplete"],
                 "detail": (
                     f"{chamber.title()} disclosure readiness remains unavailable until every "
                     "approved source-validation gate has retained supporting evidence."
                 ),
-                "evaluatedAt": int(time.time() * 1000),
-                "governingVersion": "signal-v2-disclosure-readiness-v1",
-                "unmetPrerequisites": [
-                    {"code": code, "supported": False} for code in gate_codes
+                "evaluated_at": int(time.time() * 1000),
+                "governing_version": "signal-v2-disclosure-readiness-v1",
+                "unmet_prerequisites": [
+                    {
+                        "code": code,
+                        "detail": code.replace("_", " "),
+                        "supported": False,
+                    }
+                    for code in gate_codes
                 ],
             }
 
         return {"house": unavailable("house"), "senate": unavailable("senate")}
+
+    @staticmethod
+    def assess_evidence_result(evidence: dict[str, Any]) -> tuple[str, str]:
+        artifacts = evidence["artifacts"]
+        if not artifacts:
+            return "empty", "No retained disclosure artifacts are currently available."
+        extraction_statuses = [
+            extraction["status"]
+            for artifact in artifacts
+            for version in artifact["versions"]
+            for extraction in version["extractions"]
+        ]
+        normalization_statuses = [
+            normalization["status"]
+            for artifact in artifacts
+            for version in artifact["versions"]
+            for row in version["rowOccurrences"]
+            for normalization in row["normalizations"]
+        ]
+        latest_retrievals = [
+            artifact["retrievalObservations"][-1]
+            for artifact in artifacts
+            if artifact["retrievalObservations"]
+        ]
+        if "failed" in extraction_statuses or "failed" in normalization_statuses:
+            return "error", "At least one retained artifact has a failed extraction or normalization."
+        if any(item["freshnessStatus"] == "stale" for item in latest_retrievals):
+            return "stale", "At least one latest source retrieval is explicitly stale."
+        if (
+            any(item["coverageStatus"] in {"partial", "unknown"} for item in latest_retrievals)
+            or any(status in {"partial", "unsupported"} for status in extraction_statuses)
+            or "partial" in normalization_statuses
+        ):
+            return "partial", "Retained evidence is present with explicit coverage or processing limitations."
+        return "successful", "Retained disclosure evidence loaded successfully."
 
     def get_artifact_version(
         self,

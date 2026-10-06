@@ -5,7 +5,7 @@ from fastapi.middleware.cors import CORSMiddleware
 
 from db.database import init_db
 from jobs.scheduler import start_scheduler, shutdown_scheduler
-from routers import companies, disclosures, events, findings, prices, scan, signals, watch_events
+from routers import capabilities, companies, disclosures, events, findings, prices, scan, signals, watch_events
 
 
 @asynccontextmanager
@@ -26,6 +26,7 @@ app.add_middleware(
 )
 
 app.include_router(companies.router)
+app.include_router(capabilities.router)
 app.include_router(signals.router)
 app.include_router(prices.router)
 app.include_router(findings.router)

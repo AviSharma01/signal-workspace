@@ -1,5 +1,6 @@
 import { useEffect, useReducer } from 'react'
 import { apiFetch } from './api'
+import type { CapabilityState, ResultStatus } from '../capabilities/types'
 
 export interface WatchAssessment {
   policyVersion: string
@@ -28,6 +29,11 @@ export interface WatchAssessment {
 }
 
 export interface WatchEventDetail {
+  capability: CapabilityState
+  result: ResultStatus
+  checkOutcomes: {
+    market: ResultStatus & { capability: CapabilityState }
+  }
   watchEvent: {
     id: string
     eventId: string
@@ -66,6 +72,8 @@ interface Response {
   evaluatedAt: number
   policyVersion: string
   state: 'empty' | 'complete'
+  capability: CapabilityState
+  result: ResultStatus
   watchEvents: WatchEventDetail[]
 }
 

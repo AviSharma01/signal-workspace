@@ -1,6 +1,7 @@
 import { Link } from 'react-router-dom'
 import { usePrices } from '../data/usePrices'
 import { useCompanies } from '../data/useCompanies'
+import CapabilityNotice from '../capabilities/CapabilityNotice'
 import { ACCENT, BORDER, TEXT_MUTED, TEXT_PRIMARY } from '../shared/constants'
 
 interface CompanyPanelContentProps {
@@ -22,8 +23,8 @@ function computeDayChange(prices: { close: number }[]): { text: string; positive
 
 export default function CompanyPanelContent({ companyId }: CompanyPanelContentProps) {
   const { companies } = useCompanies()
-  const company = companies.find((c) => c.id === companyId)
-  const { prices, loading } = usePrices(companyId, '1D')
+  const company = companies.find(c => c.id === companyId)
+  const { prices, capability, result, loading, error } = usePrices(companyId, '1D')
 
   const currentPrice = prices[prices.length - 1]?.close
   const dayChange = computeDayChange(prices)
@@ -72,6 +73,10 @@ export default function CompanyPanelContent({ companyId }: CompanyPanelContentPr
             <div style={{ height: 36, display: 'flex', alignItems: 'center' }}>
               <span style={{ fontSize: 12, color: TEXT_MUTED }}>Loading…</span>
             </div>
+          ) : capability && capability.availability !== 'available' ? (
+            <CapabilityNotice capability={capability} result={result} compact />
+          ) : error ? (
+            <span style={{ fontSize: 12, color: '#e5534b' }}>Price request error: {error}</span>
           ) : currentPrice !== undefined ? (
             <div style={{ display: 'flex', alignItems: 'baseline', gap: 8 }}>
               <span

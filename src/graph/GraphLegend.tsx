@@ -1,4 +1,12 @@
-import { BLOB_NEWS, BLOB_DISCUSSION, BLOB_RELATED, TEXT_MUTED, BG_SURFACE, BORDER } from '../shared/constants'
+import {
+  BLOB_NEWS,
+  BLOB_DISCUSSION,
+  BLOB_RELATED,
+  TEXT_MUTED,
+  BG_SURFACE,
+  BORDER,
+} from '../shared/constants'
+import { relationshipPresentation } from '../capabilities/presentation.js'
 
 const ITEMS = [
   { color: BLOB_NEWS, label: 'News' },
@@ -7,6 +15,7 @@ const ITEMS = [
 ] as const
 
 export default function GraphLegend() {
+  const relationship = relationshipPresentation('legacy_context')
   return (
     <div
       style={{
@@ -62,10 +71,29 @@ export default function GraphLegend() {
         }}
       >
         <div style={{ display: 'flex', alignItems: 'center', gap: 4 }}>
-          <div style={{ width: 5, height: 5, borderRadius: '50%', backgroundColor: TEXT_MUTED, opacity: 0.4 }} />
-          <div style={{ width: 8, height: 8, borderRadius: '50%', backgroundColor: TEXT_MUTED, opacity: 0.4 }} />
+          <div
+            style={{
+              width: 5,
+              height: 5,
+              borderRadius: '50%',
+              backgroundColor: TEXT_MUTED,
+              opacity: 0.4,
+            }}
+          />
+          <div
+            style={{
+              width: 8,
+              height: 8,
+              borderRadius: '50%',
+              backgroundColor: TEXT_MUTED,
+              opacity: 0.4,
+            }}
+          />
         </div>
         <span style={{ fontSize: 11, color: TEXT_MUTED }}>size = recency</span>
+      </div>
+      <div style={{ fontSize: 10, color: TEXT_MUTED }}>
+        {relationship.label}; not candidate or verified identity
       </div>
     </div>
   )

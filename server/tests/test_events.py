@@ -58,6 +58,37 @@ class EventApplicationTest(unittest.TestCase):
             self.assertIn("official_evidence_missing", event["eligibility"]["primary_analysis"]["reasons"])
             self.assertFalse(event["eligibility"]["watch_admission_prerequisites"]["eligible"])
 
+    def test_recorded_event_pit_v1_envelope_remains_reproducible(self):
+        recorded = self.events.record_view(
+            population="test",
+            perspective="public_information",
+            as_of=self.now,
+        )
+
+        self.assertEqual(
+            recorded["marketOutcomes"],
+            {
+                "availability": "unavailable",
+                "reasons": ["market_data_contract_not_satisfied"],
+            },
+        )
+        self.assertEqual(
+            set(recorded["coverage"]["readiness"]["house"]),
+            {
+                "chamber",
+                "availability",
+                "reasonCode",
+                "detail",
+                "evaluatedAt",
+                "governingVersion",
+                "unmetPrerequisites",
+            },
+        )
+        self.assertEqual(
+            self.events.reproduce_recorded_view(recorded["id"], population="test")["output"],
+            recorded,
+        )
+
     def official(self, publication="2025-07-03T09:00:00-04:00", *, document="20030001", count=1,
                  transaction_date="07/01/2025", amount="$1,001 - $15,000", observed=None,
                  asset="Example Corp (ABC) [ST]"):

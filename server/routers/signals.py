@@ -1,6 +1,10 @@
+import time
+
 from fastapi import APIRouter, HTTPException
 
+from capabilities import result_state
 from db.database import get_connection
+from routers.capabilities import capability_json
 
 router = APIRouter(prefix="/api")
 
@@ -61,4 +65,18 @@ def get_signals(company_id: str) -> dict:
         for r in disc_rows
     ]
 
-    return {"news": news, "discussion": discussion}
+    evaluated_at = int(time.time() * 1000)
+    return {
+        "classification": "legacy_v1_context",
+        "v2Capability": False,
+        "detail": "These context records are not V2 Events, candidate relationships, verified relationships, anomalies, or Findings.",
+        "result": capability_json(
+            result_state(
+                "successful" if news or discussion else "empty",
+                "Legacy V1 context loaded." if news or discussion else "No legacy V1 context records exist.",
+                evaluated_at=evaluated_at,
+            )
+        ),
+        "news": news,
+        "discussion": discussion,
+    }

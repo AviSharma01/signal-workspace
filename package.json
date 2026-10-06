@@ -6,6 +6,7 @@
   "scripts": {
     "dev": "vite",
     "build": "vite build",
+    "test:frontend": "tsc -p tsconfig.frontend-tests.json && node --test \"$PWD/node_modules/.tmp/frontend-tests/frontend-tests/capabilities.test.js\"",
     "preview": "vite preview",
     "lint": "eslint src --ext .ts,.tsx",
     "lint:fix": "eslint src --ext .ts,.tsx --fix",

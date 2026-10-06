@@ -1,5 +1,6 @@
 import { useEffect, useReducer } from 'react'
 import { apiFetch } from './api'
+import type { CapabilityState, ResultStatus } from '../capabilities/types'
 
 export interface DisclosureNormalization {
   id: string
@@ -58,6 +59,8 @@ export interface DisclosureArtifact {
 }
 
 interface DisclosureEvidenceResponse {
+  capability: CapabilityState
+  result: ResultStatus
   population: 'real'
   sourceFilings: Array<{
     id: string
@@ -71,18 +74,22 @@ interface DisclosureEvidenceResponse {
 }
 
 interface ChamberReadiness {
+  id: string
+  name: string
   chamber: string
   availability: 'available' | 'conditional' | 'unavailable'
   reasonCode: string
+  reasonCodes: string[]
   detail: string
   evaluatedAt: number
   governingVersion: string
-  unmetPrerequisites: Array<{ code: string; supported: boolean }>
+  unmetPrerequisites: Array<{ code: string; detail: string; supported: boolean }>
 }
 
 interface DisclosureReadinessResponse {
   house: ChamberReadiness
   senate: ChamberReadiness
+  result: ResultStatus
 }
 
 interface State {

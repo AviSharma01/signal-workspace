@@ -9,7 +9,18 @@ import { buildMarkers } from './EventMarker'
 import PriceChart from './PriceChart'
 import SignalPanel from './SignalPanel'
 import FindingsPanel from './FindingsPanel'
-import { ACCENT, ANIMATION, BG_PRIMARY, BG_SURFACE, BORDER, TEXT_MUTED, TEXT_PRIMARY } from '../shared/constants'
+import CapabilityNotice from '../capabilities/CapabilityNotice'
+import { useCapabilities } from '../data/useCapabilities'
+import { capabilityActionDisabled } from '../capabilities/presentation.js'
+import {
+  ACCENT,
+  ANIMATION,
+  BG_PRIMARY,
+  BG_SURFACE,
+  BORDER,
+  TEXT_MUTED,
+  TEXT_PRIMARY,
+} from '../shared/constants'
 import './detail.css'
 
 type ChartType = 'candlestick' | 'line'
@@ -20,7 +31,9 @@ function formatPrice(price: number): string {
   return price.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })
 }
 
-function formatDayChange(prices1D: { close: number }[]): { text: string; positive: boolean } | null {
+function formatDayChange(
+  prices1D: { close: number }[]
+): { text: string; positive: boolean } | null {
   if (prices1D.length < 2) return null
   const open = prices1D[0].close
   const close = prices1D[prices1D.length - 1].close
@@ -34,7 +47,7 @@ export default function DetailPage() {
   const { companyId } = useParams<{ companyId: string }>()
   const navigate = useNavigate()
   const { companies } = useCompanies()
-  const company = companies.find((c) => c.id === companyId)
+  const company = companies.find(c => c.id === companyId)
 
   const [chartType, setChartType] = useState<ChartType>('candlestick')
   const [range, setRange] = useState<PriceRange>('1M')
@@ -44,13 +57,34 @@ export default function DetailPage() {
   // that converge here. No circular updates — each user gesture calls setActiveSignalId once.
   const [activeSignalId, setActiveSignalId] = useState<string | null>(null)
 
-  const { prices, loading: pricesLoading } = usePrices(companyId ?? '', range)
+  const {
+    prices,
+    capability: marketCapability,
+    result: marketResult,
+    loading: pricesLoading,
+    error: pricesError,
+  } = usePrices(companyId ?? '', range)
   const { prices: prices1D, loading: prices1DLoading } = usePrices(companyId ?? '', '1D')
-  const { news, discussion, loading: signalsLoading } = useSignals(companyId ?? null)
+  const {
+    news,
+    discussion,
+    classification: signalClassification,
+    detail: signalDetail,
+    result: signalResult,
+    loading: signalsLoading,
+    error: signalsError,
+  } = useSignals(companyId ?? null)
+  const {
+    getCapability,
+    loading: capabilitiesLoading,
+    error: capabilitiesError,
+  } = useCapabilities()
+  const analysisCapability = getCapability('analysis.market_event_study')
+  const marketDisabled = capabilityActionDisabled(marketCapability)
 
   const relatedCompanies = useMemo(
-    () => company ? companies.filter((c) => c.sector === company.sector && c.id !== companyId) : [],
-    [company, companyId, companies],
+    () => (company ? companies.filter(c => c.sector === company.sector && c.id !== companyId) : []),
+    [company, companyId, companies]
   )
 
   const priceRange = useMemo(
@@ -58,25 +92,25 @@ export default function DetailPage() {
       from: prices[0]?.timestamp ?? 0,
       to: prices[prices.length - 1]?.timestamp ?? 0,
     }),
-    [prices],
+    [prices]
   )
 
   // Markers filtered to current chart range — rebuilds when prices or signals change.
   // activeSignalId is NOT a dependency: styling is applied inside PriceChart based on the prop.
   const markers = useMemo(
     () => buildMarkers(news, discussion, priceRange),
-    [news, discussion, priceRange],
+    [news, discussion, priceRange]
   )
 
   const currentPrice = prices1D[prices1D.length - 1]?.close
   const dayChange = formatDayChange(prices1D)
 
   const handleMarkerClick = useCallback((signalId: string) => {
-    setActiveSignalId((prev) => (prev === signalId ? null : signalId))
+    setActiveSignalId(prev => (prev === signalId ? null : signalId))
   }, [])
 
   const handleSignalSelect = useCallback((signalId: string) => {
-    setActiveSignalId((prev) => (prev === signalId ? null : signalId))
+    setActiveSignalId(prev => (prev === signalId ? null : signalId))
   }, [])
 
   if (!companyId) return null
@@ -150,7 +184,14 @@ export default function DetailPage() {
         {/* Price + day change */}
         {!prices1DLoading && currentPrice !== undefined && (
           <div style={{ display: 'flex', alignItems: 'baseline', gap: 8 }}>
-            <span style={{ fontSize: 15, color: TEXT_PRIMARY, fontWeight: 500, fontVariantNumeric: 'tabular-nums' }}>
+            <span
+              style={{
+                fontSize: 15,
+                color: TEXT_PRIMARY,
+                fontWeight: 500,
+                fontVariantNumeric: 'tabular-nums',
+              }}
+            >
               ${formatPrice(currentPrice)}
             </span>
             {dayChange && (
@@ -180,10 +221,12 @@ export default function DetailPage() {
 
         {/* Chart type toggle */}
         <div style={{ display: 'flex', gap: 2 }}>
-          {(['candlestick', 'line'] as const).map((type) => (
+          {(['candlestick', 'line'] as const).map(type => (
             <button
               key={type}
               onClick={() => setChartType(type)}
+              disabled={marketDisabled}
+              title={marketCapability?.detail}
               style={{
                 fontSize: 11,
                 padding: '3px 10px',
@@ -191,7 +234,8 @@ export default function DetailPage() {
                 border: `1px solid ${chartType === type ? ACCENT : BORDER}`,
                 backgroundColor: chartType === type ? `${ACCENT}22` : 'transparent',
                 color: chartType === type ? ACCENT : TEXT_MUTED,
-                cursor: 'pointer',
+                cursor: marketDisabled ? 'not-allowed' : 'pointer',
+                opacity: marketDisabled ? 0.5 : 1,
                 fontWeight: 500,
                 textTransform: 'capitalize',
               }}
@@ -203,10 +247,12 @@ export default function DetailPage() {
 
         {/* Range selector */}
         <div style={{ display: 'flex', gap: 2 }}>
-          {RANGES.map((r) => (
+          {RANGES.map(r => (
             <button
               key={r}
               onClick={() => setRange(r)}
+              disabled={marketDisabled}
+              title={marketCapability?.detail}
               style={{
                 fontSize: 11,
                 padding: '3px 10px',
@@ -214,7 +260,8 @@ export default function DetailPage() {
                 border: `1px solid ${range === r ? ACCENT : BORDER}`,
                 backgroundColor: range === r ? `${ACCENT}22` : 'transparent',
                 color: range === r ? ACCENT : TEXT_MUTED,
-                cursor: 'pointer',
+                cursor: marketDisabled ? 'not-allowed' : 'pointer',
+                opacity: marketDisabled ? 0.5 : 1,
                 fontWeight: 500,
               }}
             >
@@ -227,14 +274,39 @@ export default function DetailPage() {
       {/* ── Body: chart + findings + signal panel ── */}
       <div style={{ flex: 1, display: 'flex', overflow: 'hidden' }}>
         <div style={{ flex: 1, overflow: 'hidden' }}>
-          <PriceChart
-            prices={prices}
-            markers={markers}
-            activeSignalId={activeSignalId}
-            onMarkerClick={handleMarkerClick}
-            chartType={chartType}
-            loading={pricesLoading}
-          />
+          {pricesError ? (
+            <div className="flex h-full items-center justify-center p-6">
+              <p className="max-w-xl text-xs text-[#e5534b]">Request error: {pricesError}</p>
+            </div>
+          ) : !marketCapability ? (
+            <div className="flex h-full items-center justify-center p-6">
+              <p
+                className={capabilitiesError ? 'text-xs text-[#e5534b]' : 'text-xs text-[#6b6b7b]'}
+              >
+                {capabilitiesError
+                  ? `Capability request error: ${capabilitiesError}`
+                  : capabilitiesLoading || pricesLoading
+                    ? 'Loading market capability status…'
+                    : 'Market capability status is not available; chart controls remain disabled.'}
+              </p>
+            </div>
+          ) : marketCapability.availability !== 'available' ? (
+            <div className="flex h-full items-center justify-center p-6">
+              <div className="max-w-xl space-y-3">
+                <CapabilityNotice capability={marketCapability} result={marketResult} />
+                {analysisCapability && <CapabilityNotice capability={analysisCapability} />}
+              </div>
+            </div>
+          ) : (
+            <PriceChart
+              prices={prices}
+              markers={markers}
+              activeSignalId={activeSignalId}
+              onMarkerClick={handleMarkerClick}
+              chartType={chartType}
+              loading={pricesLoading}
+            />
+          )}
         </div>
 
         {/* Findings panel — investigation agent output */}
@@ -257,6 +329,10 @@ export default function DetailPage() {
           activeSignalId={activeSignalId}
           onSignalSelect={handleSignalSelect}
           loading={signalsLoading}
+          classification={signalClassification}
+          detail={signalDetail}
+          result={signalResult}
+          error={signalsError}
           relatedCompanies={relatedCompanies}
         />
       </div>

@@ -12,8 +12,8 @@ export interface CompanyNodeData {
 export interface RelatedCompanyNodeData {
   label: string
   sector: string
-  ticker: string    // the actual company id for navigation
-  parentId: string  // which primary company this was expanded from
+  ticker: string // the actual company id for navigation
+  parentId: string // which primary company this was expanded from
   animationDelay: number
 }
 
@@ -35,5 +35,16 @@ export type RelatedCompanyFlowNode = Node<RelatedCompanyNodeData, 'relatedCompan
 export type NewsFlowNode = Node<NewsNodeData, 'news'>
 export type DiscussionFlowNode = Node<DiscussionNodeData, 'discussion'>
 
-export type AppNode = HubFlowNode | CompanyFlowNode | RelatedCompanyFlowNode | NewsFlowNode | DiscussionFlowNode
-export type AppEdge = Edge<Record<string, never>>
+export type AppNode =
+  | HubFlowNode
+  | CompanyFlowNode
+  | RelatedCompanyFlowNode
+  | NewsFlowNode
+  | DiscussionFlowNode
+export interface RelationshipData {
+  relationshipType: 'news_context' | 'discussion_context' | 'sector_context'
+  standing: 'legacy_context'
+  evidenceBasis: 'legacy_v1_signal_feed' | 'shared_seed_sector'
+}
+
+export type AppEdge = Edge<RelationshipData>

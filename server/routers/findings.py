@@ -1,6 +1,7 @@
-from fastapi import APIRouter, Query
+from fastapi import APIRouter, Depends, Query
 
-from agent.findings_store import list_findings
+from capabilities import CapabilityApplication, result_state
+from routers.capabilities import capability_json, get_capability_application
 
 router = APIRouter(prefix="/api")
 
@@ -9,27 +10,19 @@ router = APIRouter(prefix="/api")
 def get_findings(
     ticker: str | None = Query(default=None),
     limit: int = Query(default=50, ge=1),
+    capabilities: CapabilityApplication = Depends(get_capability_application),
 ) -> dict:
-    clamped = min(limit, 200)
-    rows = list_findings(
-        limit=clamped,
-        ticker=ticker.upper() if ticker else None,
-    )
+    del ticker, limit
+    capability = capabilities.get("investigation.runtime")
     return {
-        "findings": [
-            {
-                "id":               r["id"],
-                "companyId":        r["company_id"],
-                "createdAt":        r["created_at"],
-                "trigger":          r["trigger"],
-                "primaryDriver":    r["primary_driver"],
-                "hypothesis":       r["hypothesis"],
-                "evidence":         r["evidence"],
-                "confidence":       r["confidence"],
-                "needsHumanReview": r["needs_human_review"],
-                "iterations":       r["iterations"],
-                "costUsd":          r["cost_usd"],
-            }
-            for r in rows
-        ]
+        "capability": capability_json(capability),
+        "result": capability_json(
+            result_state(
+                "empty",
+                "Legacy V1 findings are excluded from the V2 investigation surface.",
+                evaluated_at=capability["evaluated_at"],
+            )
+        ),
+        "findings": [],
+        "legacyDataExcluded": True,
     }

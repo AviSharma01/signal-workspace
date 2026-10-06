@@ -561,10 +561,27 @@ class EventApplication:
             normalizationIds=sorted(item["id"] for row in visible_rows.values() for item in row["normalizations"] if item["normalizedAt"] <= computed_at),
             observationIds=sorted(item["id"] for version in manifest_versions.values() for item in version["observations"] if item["observedAt"] <= computed_at))
         reason_counts = Counter(reason for event in events for reason in event["eligibility"]["primary_analysis"]["reasons"])
-        readiness = self._disclosures.query_chamber_readiness(population=population)
-        for chamber in readiness.values():
-            if isinstance(chamber, dict):
-                chamber["evaluatedAt"] = computed_at
+        current_readiness = self._disclosures.query_chamber_readiness(population=population)
+        # Keep the persisted event-pit@1 envelope byte-compatible with recorded #28/#29 views.
+        # The richer #30 capability contract is added only at the HTTP boundary.
+        readiness = {
+            chamber: {
+                "chamber": state["chamber"],
+                "availability": state["availability"],
+                "reasonCode": state["reason_code"],
+                "detail": state["detail"],
+                "evaluatedAt": computed_at,
+                "governingVersion": state["governing_version"],
+                "unmetPrerequisites": [
+                    {
+                        "code": prerequisite["code"],
+                        "supported": prerequisite.get("supported", False),
+                    }
+                    for prerequisite in state["unmet_prerequisites"]
+                ],
+            }
+            for chamber, state in current_readiness.items()
+        }
         return {"methodVersion": METHOD_VERSION, "computedAt": computed_at, "perspective": perspective,
                 "asOf": as_of, "mode": mode, "originalAsOf": original_as_of,
                 "inputManifest": input_manifest,
@@ -583,7 +600,10 @@ class EventApplication:
                     "filings": filing_coverage(events, versions, visible_rows),
                     "panelComplete": False, "readiness": readiness},
                 "selectedNormalizationIds": sorted(selected_normalizations),
-                "marketOutcomes": {"availability": "unavailable", "reasons": ["market_data_contract_not_satisfied"]}}
+                "marketOutcomes": {
+                    "availability": "unavailable",
+                    "reasons": ["market_data_contract_not_satisfied"],
+                }}
 
     def record_view(self, *, population: str, **request: Any) -> dict:
         view = self.derive(population=population, **request)

@@ -1,5 +1,6 @@
 import { useWatchEvents } from '../data/useWatchEvents'
 import type { WatchAssessment } from '../data/useWatchEvents'
+import CapabilityNotice from '../capabilities/CapabilityNotice'
 
 function instant(value: number): string {
   return new Date(value).toLocaleString('en-US', {
@@ -33,6 +34,7 @@ export default function WatchEventsPanel() {
       </p>
       {loading && <p className="text-xs text-[#6b6b7b]">Loading Watch Events…</p>}
       {error && <p className="text-xs text-[#e5534b]">{error} · Displayed data may be stale.</p>}
+      {response && <CapabilityNotice capability={response.capability} result={response.result} />}
       {response?.state === 'empty' && (
         <p className="text-xs text-[#6b6b7b]">No Watch Events have been admitted.</p>
       )}
@@ -51,6 +53,7 @@ export default function WatchEventsPanel() {
               · {current.recency.status.replaceAll('_', ' ')}
             </summary>
             <div className="mt-2 space-y-1 text-xs text-[#6b6b7b]">
+              <CapabilityNotice capability={detail.capability} result={detail.result} compact />
               <div>
                 Current evaluation: {instant(current.evaluatedAt)} · {current.policyVersion}
               </div>
@@ -61,6 +64,11 @@ export default function WatchEventsPanel() {
                   : current.admissionCriteria.reasons.join(', ')}
               </div>
               <div>Reasons: {current.lifecycleReasons.join(', ') || 'none'}</div>
+              <div>
+                Market check outcome: {detail.checkOutcomes.market.state} ·{' '}
+                {detail.checkOutcomes.market.capability.availability} ·{' '}
+                {detail.checkOutcomes.market.capability.reasonCodes.join(', ')}
+              </div>
               <div>Transaction date: {current.transactionDate ?? 'unknown'}</div>
               <div>
                 Publication:{' '}

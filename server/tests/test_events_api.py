@@ -28,6 +28,13 @@ class EventApiTest(unittest.TestCase):
         return self.client.get("/api/events", params={
             "perspective": "public_information", "asOf": ms("2025-07-08T20:00:00-04:00")})
 
+    def test_empty_event_result_does_not_mean_event_derivation_is_unavailable(self):
+        view = self.get_view().json()
+
+        self.assertEqual(view["capability"]["availability"], "available")
+        self.assertEqual(view["result"]["state"], "empty")
+        self.assertEqual(view["events"], [])
+
     def test_api_exposes_event_evidence_eligibility_and_coverage_with_camel_case_record_keys(self):
         # Physically isolated test DB: only this test's designated real population.
         self.fixture.population = "real"
@@ -44,6 +51,9 @@ class EventApiTest(unittest.TestCase):
         self.assertEqual(event["identities"]["security"]["identity"]["identityId"], "security:ABC")
         self.assertEqual(view["coverage"]["readiness"]["house"]["availability"], "unavailable")
         self.assertEqual(view["marketOutcomes"]["availability"], "unavailable")
+        self.assertEqual(view["marketOutcomes"]["capability"]["availability"], "unavailable")
+        self.assertEqual(view["marketOutcomes"]["result"]["state"], "empty")
+        self.assertEqual(view["marketOutcomes"]["outcomes"], [])
 
     def test_api_rejects_fixture_population_and_cross_population_citations(self):
         version, _ = self.fixture.official()
@@ -63,6 +73,8 @@ class EventApiTest(unittest.TestCase):
         created = self.client.post("/api/events/views", json=request)
         self.assertEqual(created.status_code, 201, created.text)
         recorded = created.json()
+        self.assertEqual(recorded["capability"]["availability"], "available")
+        self.assertEqual(recorded["marketOutcomes"]["capability"]["availability"], "unavailable")
         correction = self.client.post("/api/events/evidence-assertions", json={
             "kind": "correction", "citations": [{"artifactVersionId": version, "locator": "field correction"}],
             "publicAt": ms("2025-07-07T10:00:00-04:00"), "basis": "official correction to direction only",

@@ -135,6 +135,68 @@ class DisclosureApiTest(unittest.TestCase):
         )
         self.assertEqual(rejected.status_code, 422)
 
+    def test_empty_evidence_is_a_valid_result_for_an_available_capability(self) -> None:
+        payload = self.client.get("/api/disclosures/evidence").json()
+
+        self.assertEqual(payload["capability"]["availability"], "available")
+        self.assertEqual(payload["result"]["state"], "empty")
+        self.assertEqual(payload["artifacts"], [])
+
+    def test_stale_evidence_result_does_not_make_the_capability_unavailable(self) -> None:
+        self.client.post(
+            "/api/disclosures/supporting-retrievals",
+            json={
+                "sourceName": "supporting-fixture",
+                "sourceUrl": "https://supporting.example/stale.json",
+                "mediaType": "application/json",
+                "payloadBase64": base64.b64encode(b"[]").decode(),
+                "purpose": "manual",
+                "freshnessStatus": "stale",
+                "coverageStatus": "complete",
+            },
+        )
+
+        payload = self.client.get("/api/disclosures/evidence").json()
+        self.assertEqual(payload["capability"]["availability"], "available")
+        self.assertEqual(payload["result"]["state"], "stale")
+
+    def test_partial_evidence_result_is_separate_from_conditional_capabilities(self) -> None:
+        payload = json.dumps([{"ticker": 123}]).encode()
+        self.client.post(
+            "/api/disclosures/supporting-retrievals",
+            json={
+                "sourceName": "supporting-fixture",
+                "sourceUrl": "https://supporting.example/partial.json",
+                "mediaType": "application/json",
+                "payloadBase64": base64.b64encode(payload).decode(),
+                "purpose": "manual",
+                "freshnessStatus": "current",
+                "coverageStatus": "partial",
+            },
+        )
+
+        evidence = self.client.get("/api/disclosures/evidence").json()
+        self.assertEqual(evidence["capability"]["availability"], "available")
+        self.assertEqual(evidence["result"]["state"], "partial")
+
+    def test_failed_extraction_is_an_error_result_for_an_available_capability(self) -> None:
+        self.client.post(
+            "/api/disclosures/supporting-retrievals",
+            json={
+                "sourceName": "supporting-fixture",
+                "sourceUrl": "https://supporting.example/broken.json",
+                "mediaType": "application/json",
+                "payloadBase64": base64.b64encode(b"not-json").decode(),
+                "purpose": "manual",
+                "freshnessStatus": "current",
+                "coverageStatus": "complete",
+            },
+        )
+
+        evidence = self.client.get("/api/disclosures/evidence").json()
+        self.assertEqual(evidence["capability"]["availability"], "available")
+        self.assertEqual(evidence["result"]["state"], "error")
+
     def test_official_filing_route_constructs_authoritative_source_identity(self) -> None:
         response = self.client.post(
             "/api/disclosures/house/filings/2025/20032062/retrievals",

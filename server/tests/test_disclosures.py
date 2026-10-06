@@ -352,7 +352,7 @@ class DisclosureApplicationTest(unittest.TestCase):
         self.assertEqual(readiness["house"]["availability"], "unavailable")
         self.assertEqual(readiness["senate"]["availability"], "unavailable")
         self.assertEqual(
-            {gate["code"] for gate in readiness["house"]["unmetPrerequisites"]},
+            {gate["code"] for gate in readiness["house"]["unmet_prerequisites"]},
             {
                 "minimum_history_and_gaps",
                 "original_artifact_retrieval",

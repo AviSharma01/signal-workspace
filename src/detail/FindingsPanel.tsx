@@ -3,6 +3,9 @@ import { motion, AnimatePresence } from 'framer-motion'
 import type { Finding } from '../shared/types'
 import { useFindings } from '../data/useFindings'
 import { apiPost } from '../data/api'
+import CapabilityNotice from '../capabilities/CapabilityNotice'
+import { capabilityActionDisabled } from '../capabilities/presentation.js'
+import CapabilityActionButton from '../capabilities/CapabilityActionButton.js'
 import { BORDER, TEXT_MUTED, TEXT_PRIMARY, ANIMATION } from '../shared/constants'
 import FindingCard from './FindingCard'
 
@@ -30,7 +33,7 @@ interface FindingsPanelProps {
 }
 
 export default function FindingsPanel({ companyId }: FindingsPanelProps) {
-  const { findings, loading, refetch } = useFindings(companyId)
+  const { findings, capability, result, loading, error, refetch } = useFindings(companyId)
   const [scanning, setScanning] = useState(false)
   const [scanError, setScanError] = useState<string | null>(null)
   const [priorExpanded, setPriorExpanded] = useState(false)
@@ -38,8 +41,10 @@ export default function FindingsPanel({ companyId }: FindingsPanelProps) {
   const deduped = deduplicateFindings(findings)
   const latest = deduped[0] ?? null
   const prior = deduped.slice(1)
+  const actionDisabled = capabilityActionDisabled(capability, scanning)
 
   async function handleScanNow() {
+    if (actionDisabled) return
     setScanning(true)
     setScanError(null)
     try {
@@ -86,34 +91,54 @@ export default function FindingsPanel({ companyId }: FindingsPanelProps) {
         </span>
 
         {/* Scan Now — debug action */}
-        <button
+        <CapabilityActionButton
           onClick={handleScanNow}
-          disabled={scanning}
+          capability={capability}
+          pending={scanning}
           style={{
             fontSize: 11,
             padding: '3px 10px',
             borderRadius: 4,
             border: `1px solid ${BORDER}`,
             backgroundColor: 'transparent',
-            color: scanning ? TEXT_MUTED : TEXT_PRIMARY,
-            cursor: scanning ? 'default' : 'pointer',
+            color: actionDisabled ? TEXT_MUTED : TEXT_PRIMARY,
+            cursor: actionDisabled ? 'not-allowed' : 'pointer',
             fontWeight: 500,
-            opacity: scanning ? 0.5 : 1,
+            opacity: actionDisabled ? 0.5 : 1,
             transition: 'opacity 150ms',
           }}
         >
           {scanning ? 'Scanning…' : 'Scan now'}
-        </button>
+        </CapabilityActionButton>
       </div>
 
       {/* Body */}
-      <div style={{ flex: 1, padding: '14px 16px', display: 'flex', flexDirection: 'column', gap: 12, overflowY: 'auto' }}>
-        {scanError && (
-          <p style={{ fontSize: 12, color: '#c97a1a', margin: 0 }}>{scanError}</p>
+      <div
+        style={{
+          flex: 1,
+          padding: '14px 16px',
+          display: 'flex',
+          flexDirection: 'column',
+          gap: 12,
+          overflowY: 'auto',
+        }}
+      >
+        {capability && <CapabilityNotice capability={capability} result={result} />}
+        {error && (
+          <p style={{ fontSize: 12, color: '#e5534b', margin: 0 }}>Request error: {error}</p>
         )}
+        {scanError && <p style={{ fontSize: 12, color: '#c97a1a', margin: 0 }}>{scanError}</p>}
 
         {loading ? (
           <p style={{ fontSize: 12, color: TEXT_MUTED, margin: 0 }}>Loading…</p>
+        ) : error ? null : !capability ? (
+          <p style={{ fontSize: 12, color: TEXT_MUTED, margin: 0 }}>
+            Investigation capability status is not available; actions remain disabled.
+          </p>
+        ) : capability.availability !== 'available' ? (
+          <p style={{ fontSize: 12, color: TEXT_MUTED, margin: 0 }}>
+            Legacy V1 findings are not displayed as V2 investigation results.
+          </p>
         ) : latest ? (
           <>
             <FindingCard finding={latest} animationDelay={0} />
@@ -121,7 +146,7 @@ export default function FindingsPanel({ companyId }: FindingsPanelProps) {
             {prior.length > 0 && (
               <div>
                 <button
-                  onClick={() => setPriorExpanded((x) => !x)}
+                  onClick={() => setPriorExpanded(x => !x)}
                   style={{
                     background: 'none',
                     border: 'none',
@@ -146,14 +171,15 @@ export default function FindingsPanel({ companyId }: FindingsPanelProps) {
                       animate={{ opacity: 1, height: 'auto' }}
                       exit={{ opacity: 0, height: 0 }}
                       transition={ANIMATION.reveal}
-                      style={{ overflow: 'hidden', display: 'flex', flexDirection: 'column', gap: 8 }}
+                      style={{
+                        overflow: 'hidden',
+                        display: 'flex',
+                        flexDirection: 'column',
+                        gap: 8,
+                      }}
                     >
                       {prior.map((f, i) => (
-                        <FindingCard
-                          key={f.id}
-                          finding={f}
-                          animationDelay={(i + 1) * 0.05}
-                        />
+                        <FindingCard key={f.id} finding={f} animationDelay={(i + 1) * 0.05} />
                       ))}
                     </motion.div>
                   )}

@@ -1,6 +1,6 @@
 import { useReducer, useEffect, useRef } from 'react'
 import type { Company } from '../shared/types'
-import { apiFetch } from './api'
+import { fetchCompanies } from './companies'
 
 interface CompaniesResult {
   companies: Company[]
@@ -36,7 +36,7 @@ export function useCompanies(): CompaniesResult {
     const generation = ++generationRef.current
     dispatch({ type: 'start' })
 
-    apiFetch<Company[]>('/api/companies')
+    fetchCompanies()
       .then((data) => {
         if (generation !== generationRef.current) return
         dispatch({ type: 'success', companies: data })
