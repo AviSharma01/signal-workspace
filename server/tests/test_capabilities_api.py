@@ -71,7 +71,7 @@ class CapabilityApiTest(unittest.TestCase):
         )
         self.assertEqual(
             capabilities["investigation.market_triggered"]["reasonCodes"],
-            ["market_data_contract_unsatisfied", "investigation_runtime_not_implemented"],
+            ["market_data_contract_unsatisfied", "market_investigation_trigger_criteria_not_approved"],
         )
 
     def test_watch_lifecycle_is_available_while_current_discovery_readiness_is_unavailable(self) -> None:

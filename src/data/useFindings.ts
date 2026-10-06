@@ -1,5 +1,5 @@
 import { useReducer, useEffect, useRef, useState, useCallback } from 'react'
-import type { Finding } from '../shared/types'
+import type { Finding } from './investigationTypes'
 import type { CapabilityState, ResultStatus } from '../capabilities/types'
 import { apiFetch } from './api'
 
@@ -64,7 +64,7 @@ export function useFindings(companyId: string | null): FindingsResult {
     const generation = ++generationRef.current
     dispatch({ type: 'start' })
 
-    apiFetch<FindingsResponse>(`/api/findings?ticker=${companyId}&limit=10`)
+    apiFetch<FindingsResponse>(`/api/findings?ticker=${encodeURIComponent(companyId)}&limit=10`)
       .then((data) => {
         if (generation !== generationRef.current) return
         dispatch({ type: 'success', response: data })

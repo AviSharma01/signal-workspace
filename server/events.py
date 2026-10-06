@@ -175,6 +175,46 @@ def filing_coverage(events: list[dict], versions: dict, rows: dict) -> list[dict
     return coverage
 
 
+def evidence_boundaries(versions: dict, facts: list[dict], *, perspective: str, as_of: int):
+    """Shared #28 temporal rules for Event derivation and investigation snapshots."""
+    # Availability assertions must themselves be eligible. A later statement about
+    # earlier publication cannot be smuggled into that earlier evidence boundary.
+    claims = [fact for fact in facts if fact["kind"] == "publication"
+              and fact["artifact_version_id"] in versions
+              and fact["public_at"] is not None and fact["public_at"] <= as_of
+              and (perspective == "public_information" or fact["observed_at"] <= as_of)]
+    bounds = {key: version["observed_at"] for key, version in versions.items()}
+    # Monotonic relaxation from retrieval upper bounds. A self-cited source
+    # publication statement can establish its own version's historical bound;
+    # other citations must already have an independently supported boundary.
+    for _ in range(len(claims) + 1):
+        previous = dict(bounds)
+        for claim in claims:
+            interval = publication_interval(claim)
+            if interval is not None:
+                target = claim["artifact_version_id"]
+                supporting_bounds = [bounds[c["artifact_version_id"]] for c in claim["citations"]
+                                     if c["artifact_version_id"] != target]
+                supported_bound = max([interval[1], claim["public_at"]] + supporting_bounds)
+                bounds[target] = min(bounds[target], supported_bound)
+        if bounds == previous:
+            break
+
+    def fact_boundary(fact):
+        if perspective == "system_observation":
+            return max([fact["observed_at"]] + [versions[c["artifact_version_id"]]["observed_at"] for c in fact["citations"]])
+        if fact["public_at"] is None:
+            return None
+        return max([fact["public_at"]] + [bounds[c["artifact_version_id"]] for c in fact["citations"]])
+
+    def public_boundary(fact):
+        if fact["public_at"] is None:
+            return None
+        return max([fact["public_at"]] + [bounds[c["artifact_version_id"]] for c in fact["citations"]])
+
+    return bounds, claims, fact_boundary, public_boundary
+
+
 class EventApplication:
     """#27 retained evidence → deterministic, immutable/versioned Event read views."""
 
@@ -305,40 +345,8 @@ class EventApplication:
             "normalizationIds": sorted(item["id"] for row in rows.values() for item in row["normalizations"]),
             "observationIds": sorted(item["id"] for version in versions.values() for item in version["observations"])}
 
-        # Availability assertions must themselves be eligible. A later statement about
-        # earlier publication cannot be smuggled into that earlier evidence boundary.
-        claims = [fact for fact in facts if fact["kind"] == "publication"
-                  and fact["artifact_version_id"] in versions
-                  and fact["public_at"] is not None and fact["public_at"] <= as_of
-                  and (perspective == "public_information" or fact["observed_at"] <= as_of)]
-        bounds = {key: version["observed_at"] for key, version in versions.items()}
-        # Monotonic relaxation from retrieval upper bounds. A self-cited source
-        # publication statement can establish its own version's historical bound;
-        # other citations must already have an independently supported boundary.
-        for _ in range(len(claims) + 1):
-            previous = dict(bounds)
-            for claim in claims:
-                interval = publication_interval(claim)
-                if interval is not None:
-                    target = claim["artifact_version_id"]
-                    supporting_bounds = [bounds[c["artifact_version_id"]] for c in claim["citations"]
-                                         if c["artifact_version_id"] != target]
-                    supported_bound = max([interval[1], claim["public_at"]] + supporting_bounds)
-                    bounds[target] = min(bounds[target], supported_bound)
-            if bounds == previous:
-                break
-
-        def fact_boundary(fact):
-            if perspective == "system_observation":
-                return max([fact["observed_at"]] + [versions[c["artifact_version_id"]]["observed_at"] for c in fact["citations"]])
-            if fact["public_at"] is None:
-                return None
-            return max([fact["public_at"]] + [bounds[c["artifact_version_id"]] for c in fact["citations"]])
-
-        def public_boundary(fact):
-            if fact["public_at"] is None:
-                return None
-            return max([fact["public_at"]] + [bounds[c["artifact_version_id"]] for c in fact["citations"]])
+        bounds, claims, fact_boundary, public_boundary = evidence_boundaries(
+            versions, facts, perspective=perspective, as_of=as_of)
 
         eligible_facts = [fact for fact in facts if (boundary := fact_boundary(fact)) is not None and boundary <= as_of]
         if perspective == "public_information":
@@ -613,6 +621,104 @@ class EventApplication:
             conn.execute("INSERT INTO event_recorded_views VALUES (?, ?, ?, ?)",
                          (view_id, population, view["computedAt"], json.dumps(view, sort_keys=True)))
         return view
+
+    def investigation_snapshot(self, event_id: str, *, population: str,
+                               perspective: str, as_of: int, original_occurrence_id: str | None = None) -> dict:
+        """Only the explicit occurrence's eligible retained evidence, never latest market data.
+
+        Investigation tools receive copies of this output, with no DB connection.
+        Public-information permits later extraction of an eligible raw artifact;
+        system-observation additionally requires the representation was observed.
+        """
+        view = self.derive(population=population, perspective=perspective, as_of=as_of)
+        event = next((item for item in view["events"] if
+                      (original_occurrence_id in item["occurrenceIds"] if original_occurrence_id else item["id"] == event_id)), None)
+        if event is None:
+            raise KeyError(event_id)
+        if event["status"] != "event":
+            raise ValueError("investigations require an explicit official Event")
+        versions, rows, facts = self._inputs(population)
+        facts = [fact for fact in facts if fact["observed_at"] <= view["computedAt"]]
+        bounds, _, fact_boundary, public_boundary = evidence_boundaries(
+            versions, facts, perspective=perspective, as_of=as_of)
+        version_ids = {row["artifactVersionId"] for row in event["provenance"]["rows"]}
+        eligible_ids = set(view["inputManifest"]["assertionIds"])
+        selected = [fact for fact in facts if fact["id"] in eligible_ids
+                    and (fact.get("occurrence_id") in event["occurrenceIds"]
+                         or fact.get("artifact_version_id") in version_ids
+                         or fact["kind"] == "relationship" and
+                         {fact["left_occurrence_id"], fact["right_occurrence_id"]} <= set(event["occurrenceIds"]))]
+        # Freeze the publication-proof dependency closure as well. A cited
+        # artifact may prove this Event's timing without representing its row;
+        # that does not admit the other artifact's unrelated occurrences.
+        while True:
+            needed_versions = version_ids | {c["artifact_version_id"] for fact in selected for c in fact["citations"]}
+            selected_ids = {fact["id"] for fact in selected}
+            proofs = [fact for fact in facts if fact["id"] in eligible_ids and fact["id"] not in selected_ids
+                      and fact["kind"] == "publication" and fact["artifact_version_id"] in needed_versions
+                      and fact["public_at"] is not None and fact["public_at"] <= as_of
+                      and public_boundary(fact) is not None and public_boundary(fact) <= as_of
+                      and publication_interval(fact) is not None and publication_interval(fact)[1] <= as_of]
+            if not proofs:
+                break
+            selected.extend(proofs)
+        evidence = []
+
+        def citation(version_id, locator):
+            version = versions[version_id]
+            artifact = version["artifact"]
+            return {"artifact_version_id": version_id, "locator": locator,
+                    "artifact_id": artifact["id"], "source_authority": artifact["sourceAuthority"],
+                    "source_url": artifact["sourceUrl"], "content_sha256": version["contentSha256"],
+                    "observed_at": version["observed_at"], "public_available_by": bounds[version_id],
+                    "public_time_basis": "retrieval_upper_bound" if bounds[version_id] == version["observed_at"]
+                                         else "supported_publication_evidence",
+                    "publication_evidence_ids": sorted(fact["id"] for fact in selected
+                        if fact["kind"] == "publication" and fact["artifact_version_id"] == version_id),
+                    "observation_ids": sorted(obs["id"] for obs in version["observations"]
+                        if obs["observedAt"] <= (as_of if perspective == "system_observation" else view["computedAt"]))}
+
+        for row_id in event["occurrenceIds"]:
+            row = rows[row_id]
+            version = versions[row["version_id"]]
+            with self._connection_factory() as conn:
+                extraction = conn.execute(
+                    "SELECT e.id, e.method, e.method_version, e.extracted_at FROM disclosure_normalizations n "
+                    "JOIN disclosure_extractions e ON e.id = n.extraction_id WHERE n.row_occurrence_id = ? "
+                    "ORDER BY e.extracted_at, e.id LIMIT 1", (row_id,)).fetchone()
+            if extraction is None:
+                continue
+            if extraction["extracted_at"] > (as_of if perspective == "system_observation" else view["computedAt"]):
+                continue
+            boundary = bounds[row["version_id"]] if perspective == "public_information" else max(
+                version["observed_at"], extraction["extracted_at"])
+            if boundary > as_of:
+                continue
+            evidence.append({"id": f"row:{row_id}", "kind": "reported_row", "content": row["rawFields"],
+                "citations": [citation(row["version_id"], f"row:{row['ordinal']}")],
+                "observed_at": max(version["observed_at"], extraction["extracted_at"]),
+                "public_available_by": bounds[row["version_id"]], "derived_at": extraction["extracted_at"],
+                "method_version": f"{extraction['method']}@{extraction['method_version']}",
+                "eligibility": {"eligible": True, "perspective": perspective, "as_of": as_of,
+                                "available_by": boundary, "reasons": []}})
+        for fact in selected:
+            boundary = fact_boundary(fact)
+            if boundary is None or boundary > as_of:
+                continue
+            evidence.append({"id": f"assertion:{fact['id']}", "kind": fact["kind"], "content": fact,
+                "citations": [citation(c["artifact_version_id"], c["locator"]) for c in fact["citations"]],
+                "observed_at": fact["observed_at"], "public_available_by": public_boundary(fact),
+                "derived_at": fact["observed_at"], "method_version": fact["method_version"],
+                "eligibility": {"eligible": True, "perspective": perspective, "as_of": as_of,
+                                "available_by": boundary, "reasons": []}})
+        retained_row_ids = {item["id"].removeprefix("row:") for item in evidence if item["kind"] == "reported_row"}
+        navigation_tickers = sorted({normalization["normalizedFields"]["ticker"]
+            for row_id in retained_row_ids for normalization in rows[row_id]["normalizations"]
+            if normalization["normalizedAt"] <= (as_of if perspective == "system_observation" else view["computedAt"])
+            and isinstance(normalization["normalizedFields"].get("ticker"), str)})
+        return {"event_id": event["id"], "event_method_version": METHOD_VERSION,
+                "occurrence_ids": event["occurrenceIds"], "navigation_tickers": navigation_tickers,
+                "evidence": sorted(evidence, key=lambda item: item["id"])}
 
     def get_recorded_view(self, view_id: str, *, population: str) -> dict:
         with self._connection_factory() as conn:

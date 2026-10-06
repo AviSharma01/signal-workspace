@@ -53,6 +53,9 @@ export default function WatchEventsPanel() {
               · {current.recency.status.replaceAll('_', ' ')}
             </summary>
             <div className="mt-2 space-y-1 text-xs text-[#6b6b7b]">
+              <div>
+                Watch Event: <code>{watch.id}</code> · Event: <code>{watch.eventId}</code>
+              </div>
               <CapabilityNotice capability={detail.capability} result={detail.result} compact />
               <div>
                 Current evaluation: {instant(current.evaluatedAt)} · {current.policyVersion}

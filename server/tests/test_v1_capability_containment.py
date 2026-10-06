@@ -8,7 +8,10 @@ from pathlib import Path
 from fastapi import FastAPI
 from fastapi.testclient import TestClient
 
-from routers import findings, prices, scan
+from routers import findings, investigations, prices, scan
+from capabilities import CapabilityApplication
+from disclosures import DisclosureApplication
+from investigations import InvestigationApplication
 
 
 SCHEMA_PATH = Path(__file__).parents[1] / "db" / "schema.sql"
@@ -47,6 +50,8 @@ class V1CapabilityContainmentTest(unittest.TestCase):
         api.include_router(findings.router)
         api.include_router(scan.router)
         api.dependency_overrides[prices.get_connection] = lambda: self.connection()
+        api.dependency_overrides[investigations.get_investigation_application] = lambda: InvestigationApplication(
+            self.connection, CapabilityApplication(lambda: DisclosureApplication(self.connection).query_chamber_readiness(population="real")))
         self.client = TestClient(api)
 
     def tearDown(self) -> None:
@@ -78,7 +83,7 @@ class V1CapabilityContainmentTest(unittest.TestCase):
 
         self.assertEqual(response.status_code, 200, response.text)
         payload = response.json()
-        self.assertEqual(payload["capability"]["availability"], "unavailable")
+        self.assertEqual(payload["capability"]["availability"], "available")
         self.assertEqual(payload["result"]["state"], "empty")
         self.assertEqual(payload["findings"], [])
         self.assertTrue(payload["legacyDataExcluded"])

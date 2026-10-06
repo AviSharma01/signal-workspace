@@ -404,7 +404,10 @@ class WatchApplication:
     @contextmanager
     def _transaction(self, *, write: bool):
         with self._connection_factory() as conn:
-            conn.execute("BEGIN IMMEDIATE" if write else "BEGIN")
+            # An application command may bind this service to its existing atomic
+            # transaction (for example immediate investigation authorization).
+            if not conn.in_transaction:
+                conn.execute("BEGIN IMMEDIATE" if write else "BEGIN")
             now = self._clock()
 
             @contextmanager

@@ -256,3 +256,21 @@ CREATE TABLE IF NOT EXISTS analysis_cohort_runs (
   run_json TEXT NOT NULL,
   FOREIGN KEY (source_run_id) REFERENCES analysis_runs(id)
 );
+
+-- #34: immutable frozen manifests; completion and validated Finding commit together.
+CREATE TABLE IF NOT EXISTS investigation_runs (
+  id TEXT PRIMARY KEY,
+  population TEXT NOT NULL CHECK (population IN ('real', 'test', 'demo', 'evaluation')),
+  created_at INTEGER NOT NULL,
+  manifest_json TEXT NOT NULL,
+  status TEXT NOT NULL CHECK (status IN ('ready', 'completed', 'incomplete', 'unavailable', 'review_required')),
+  execution_json TEXT,
+  finding_json TEXT
+);
+CREATE INDEX IF NOT EXISTS idx_investigation_runs_population_created
+  ON investigation_runs(population, created_at DESC);
+CREATE TRIGGER IF NOT EXISTS investigation_manifest_immutable
+BEFORE UPDATE OF id, population, created_at, manifest_json ON investigation_runs
+BEGIN
+  SELECT RAISE(ABORT, 'investigation manifest is immutable');
+END;

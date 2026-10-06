@@ -3,6 +3,7 @@ import { useDisclosureEvidence } from '../data/useDisclosureEvidence'
 import CapabilityNotice from '../capabilities/CapabilityNotice'
 import { useCapabilities } from '../data/useCapabilities'
 import WatchEventsPanel from './WatchEventsPanel'
+import InvestigationsPanel from './InvestigationsPanel'
 
 const sectionClass = 'mt-3.5 rounded-md border border-[#2a2a2e] bg-[#17171a] p-4'
 const labelClass = 'text-[11px] uppercase tracking-[0.06em] text-[#6b6b7b]'
@@ -58,6 +59,7 @@ export default function DisclosureEvidencePage() {
         )}
 
         <WatchEventsPanel />
+        <InvestigationsPanel />
 
         {readiness && (
           <section className="grid grid-cols-2 gap-3">

@@ -1,3 +1,4 @@
+import InvestigationResults from '../src/detail/InvestigationResults.js'
 import { strict as assert } from 'node:assert'
 import { test } from 'node:test'
 import { createElement } from 'react'
@@ -346,4 +347,144 @@ test('renders capability availability and result state as separate UI facts', ()
   assert.match(notice, /Some records loaded/)
   assert.match(notice, /gate_incomplete/)
   assert.match(notice, /Complete the gate/)
+})
+
+test('investigation navigation exposes frozen provenance, incomplete outcomes and validated citations', () => {
+  const capability = {
+    id: 'investigation.runtime',
+    name: 'Investigation',
+    availability: 'available' as const,
+    reasonCodes: [],
+    detail: 'Deterministic runtime.',
+    evaluatedAt: 1000,
+    governingVersion: 'bounded-investigation@1',
+    unmetPrerequisites: [],
+  }
+  const boundary = { perspective: 'system_observation' as const, asOf: 1000 }
+  const trigger = {
+    kind: 'event' as const,
+    id: 'event:one',
+    eventId: 'event:one',
+    activeOnly: false,
+    version: 'trigger-version',
+    eventMethodVersion: 'event-pit@1',
+  }
+  const reference = {
+    kind: 'reported_row',
+    observedAt: 900,
+    publicAvailableBy: 800,
+    derivedAt: 900,
+    methodVersion: 'house-ptr@1',
+    eligibility: { ...boundary, eligible: true, availableBy: 900, reasons: [] },
+    citations: [
+      {
+        artifactVersionId: 'artifact-version',
+        artifactId: 'artifact',
+        locator: 'row:0',
+        sourceAuthority: 'official',
+        sourceUrl: 'https://fixture.example/artifact',
+        contentSha256: 'retained-sha',
+        observedAt: 900,
+        publicAvailableBy: 800,
+        publicTimeBasis: 'supported_publication_evidence',
+        publicationEvidenceIds: ['publication-proof'],
+        observationIds: ['retrieval-observation'],
+      },
+    ],
+  }
+  const unavailable = {
+    ...capability,
+    id: 'investigation.selection_evaluation',
+    name: 'Selection evaluation',
+    availability: 'unavailable' as const,
+    reasonCodes: ['independent_evaluation_target_unavailable'],
+    detail: 'No independent target and baseline.',
+  }
+  const finding = {
+    runId: 'run-one',
+    trigger,
+    boundary,
+    outcome: 'budget_exhausted' as const,
+    summary: 'Investigation incomplete.',
+    hypothesesConsidered: [],
+    claims: [
+      {
+        text: 'Eligible disclosure row retained.',
+        citations: [{ evidenceId: 'row:one', reference }],
+      },
+    ],
+    counterevidence: [],
+    unresolvedQuestions: ['What explains this Event?'],
+    confidence: 'low' as const,
+    confidenceBasis: 'Confidence is not evidence.',
+    limitations: ['Explanation unresolved.'],
+    missingness: ['step_budget_exhausted'],
+    capabilityLimitations: [unavailable],
+    methodVersion: 'bounded-investigation@1',
+    modelVersion: null,
+    reviewStatus: 'needs_human_review' as const,
+    noAdviceStatus: 'validated' as const,
+    advice: null,
+    createdAt: 1000,
+  }
+  const run = {
+    id: 'run-one',
+    population: 'real' as const,
+    createdAt: 1000,
+    status: 'incomplete' as const,
+    manifest: {
+      trigger,
+      boundary,
+      evidence: [{ id: 'row:one', content: {}, ...reference }],
+      capabilitySnapshot: {
+        contractVersion: 'signal-capabilities@1',
+        capabilities: [capability, unavailable],
+        evaluatedAt: 1000,
+      },
+      budgets: { steps: 3, elapsedMs: 10000, modelSpendUsd: null },
+      mode: 'deterministic' as const,
+      methodVersion: 'bounded-investigation@1',
+      validatorVersion: 'finding-validation@1',
+      digest: 'manifest-sha',
+    },
+    execution: {
+      outcome: finding.outcome,
+      reasons: finding.missingness,
+      inspectedEvidenceIds: ['row:one'],
+      usage: { steps: 3, elapsedMs: 10, modelSpendUsd: 0 },
+      finishedAt: 1000,
+    },
+    finding,
+  }
+  const markup = renderToStaticMarkup(
+    createElement(InvestigationResults, {
+      response: {
+        capability,
+        result: { state: 'partial', detail: 'Investigation incomplete.', evaluatedAt: 1000 },
+        runs: [run, { ...run, id: 'test-run', population: 'test' }],
+      },
+    })
+  )
+  for (const pattern of [
+    /Available/,
+    /Result: partial/,
+    /budget exhausted/,
+    /needs human review/,
+    /trigger-version/,
+    /manifest-sha/,
+    /row:one/,
+    /artifact-version/,
+    /retained-sha/,
+    /row:0/,
+    /Confidence is not evidence/,
+    /No-advice:.*validated/,
+    /independent_evaluation_target_unavailable/,
+    /step_budget_exhausted/,
+    /Model:.*none/,
+    /system observation/,
+    /Declared budgets/,
+  ])
+    assert.match(markup, pattern)
+  assert.doesNotMatch(markup, /test-run/)
+  assert.doesNotMatch(markup, /Scan now/)
 })

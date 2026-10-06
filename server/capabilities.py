@@ -236,25 +236,28 @@ class CapabilityApplication:
                 capability_state(
                     "investigation.runtime",
                     "V2 investigation runtime",
-                    "unavailable",
-                    "The bounded V2 investigation runtime belongs to #34 and is not implemented by this slice.",
-                    "signal-v2-investigation-contract@1",
+                    "available",
+                    "Explicit Event/Watch investigations use frozen disclosure evidence, bounded deterministic execution and application-validated Findings. Optional models are not configured.",
+                    "bounded-investigation@1",
                     evaluated_at=evaluated_at,
-                    reason_codes=["investigation_runtime_not_implemented"],
-                    unmet_prerequisites=[
-                        {
-                            "code": "bounded_investigation_runtime",
-                            "detail": "Implement the #34 bounded, read-only, validated investigation runtime.",
-                        }
-                    ],
                 ),
                 market_unavailable(
                     "investigation.market_triggered",
                     "Market-triggered investigation",
-                    "Market-triggered investigation requires both market readiness and the bounded V2 investigation runtime.",
+                    "Market-triggered investigation remains unavailable without approved market readiness and trigger criteria.",
                     evaluated_at=evaluated_at,
-                    extra_reason_codes=["investigation_runtime_not_implemented"],
-                    extra_prerequisites=["bounded_investigation_runtime"],
+                    extra_reason_codes=["market_investigation_trigger_criteria_not_approved"],
+                    extra_prerequisites=["approved_market_investigation_trigger_criteria"],
+                ),
+                capability_state(
+                    "investigation.optional_model",
+                    "Optional model interpretation",
+                    "unavailable",
+                    "No bounded V2 model adapter is configured; deterministic investigations remain available.",
+                    "bounded-investigation@1",
+                    evaluated_at=evaluated_at,
+                    reason_codes=["optional_model_unavailable"],
+                    unmet_prerequisites=[{"code": "bounded_optional_model_adapter", "detail": "A separately configured bounded adapter is required."}],
                 ),
                 capability_state(
                     "investigation.selection_evaluation",
