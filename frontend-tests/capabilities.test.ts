@@ -7,7 +7,8 @@ import CapabilityActionButton from '../src/capabilities/CapabilityActionButton.j
 import CapabilityNotice from '../src/capabilities/CapabilityNotice.js'
 import CapabilityStateLabel from '../src/capabilities/CapabilityStateLabel.js'
 import AnalysisResults from '../src/detail/AnalysisResults.js'
-import type { AnalysisResponse } from '../src/data/analysisTypes.js'
+import CohortResults from '../src/detail/CohortResults.js'
+import type { AnalysisResponse, CohortResponse } from '../src/data/analysisTypes.js'
 import {
   capabilityActionDisabled,
   capabilityPresentation,
@@ -34,6 +35,155 @@ test('Analysis shows blocked readiness and error without claiming empty success'
   assert.match(markup, /Result: error/)
   assert.match(markup, /No approved provider/)
   assert.doesNotMatch(markup, /No retained Analysis runs/)
+})
+
+test('cohort Analysis shows blocked readiness without claiming empty success', () => {
+  const response: CohortResponse = {
+    capability: {
+      id: 'market',
+      name: 'Market readiness',
+      availability: 'unavailable',
+      reasonCodes: ['provider_not_approved'],
+      detail: 'No approved provider.',
+      evaluatedAt: 1,
+      governingVersion: 'contract@1',
+      unmetPrerequisites: [],
+    },
+    result: { state: 'error', detail: 'Unavailable.', evaluatedAt: 1 },
+    runs: [],
+  }
+  const markup = renderToStaticMarkup(createElement(CohortResults, { response }))
+  assert.match(markup, /Result: error/)
+  assert.match(markup, /No approved provider/)
+  assert.doesNotMatch(markup, /No retained cohort runs/)
+})
+
+test('cohort tables retain nulls, descriptive estimates, disagreement, dimensions and provenance', () => {
+  const point = {
+    value: 0,
+    availability: 'available' as const,
+    interval: null,
+    intervalReasons: ['fewer_than_30_reporting_members'],
+  }
+  const unavailable = { ...point, value: null, availability: 'unavailable' as const }
+  const result = {
+    state: 'partial' as const,
+    detail: 'Supported results remain valid.',
+    evaluatedAt: 1,
+  }
+  const run = {
+    id: 'cohort:production',
+    sourceRunId: 'retained-32',
+    methodVersion: 'cohort-analysis@1',
+    calculatedAt: 1,
+    productionReady: true,
+    readinessScope: 'production',
+    result,
+    report: {
+      primaryEstimand: '20_session_event_weighted_direction_aligned_log_mean',
+      coverage: {
+        chamberLabel: 'House-only readiness',
+        exploratory: true,
+        periodStatus: 'coverage_unvalidated',
+        panelComplete: false,
+        observedTimeRange: { start: '2025-01-06', end: '2025-07-03' },
+      },
+      consensus: {
+        availability: 'unavailable' as const,
+        reasons: ['historical_consensus_deferred'],
+      },
+      flow: {
+        counts: { events: 3 },
+        reasonCounts: {},
+        windows: [
+          {
+            horizonSessions: 20,
+            events: 3,
+            completedWindows: 2,
+            marketMissing: 1,
+            readinessBlocked: 0,
+            missing: 1,
+            finalDenominator: 2,
+          },
+        ],
+      },
+      results: [
+        {
+          cohort: 'combined',
+          horizonSessions: 20,
+          primary: true,
+          eventWeighted: point,
+          memberBalanced: { ...point, value: -0.01 },
+          episode: unavailable,
+          signDisagreement: true,
+          interpretation: 'Valid null/inconclusive result; descriptive small sample.',
+          sample: {
+            events: 3,
+            outcomeAvailable: 2,
+            retainedOutcomeAvailable: 2,
+            readinessBlocked: 0,
+            missing: 1,
+            members: 2,
+            securities: 1,
+            sourceFilings: 3,
+            anchorSessions: 2,
+            episodes: 2,
+            anchorMonths: 2,
+            chambers: { house: 2 },
+            coveredTimeRange: { start: '2025-01-06', end: '2025-07-03' },
+          },
+          distribution: { median: 0, q1: -0.01, q3: 0.01, iqr: 0.02 },
+          missingness: {
+            reasonCounts: { missing_bar: 1 },
+            reasonsNonExclusive: true,
+            finalDenominator: 2,
+          },
+          provenance: {
+            snapshotIds: ['retained-snapshot'],
+            asOf: 1,
+            methodVersion: 'cohort-analysis@1',
+          },
+        },
+      ],
+    },
+  }
+  const response: CohortResponse = {
+    capability: {
+      id: 'market',
+      name: 'Market readiness',
+      availability: 'available',
+      reasonCodes: [],
+      detail: 'Ready.',
+      evaluatedAt: 1,
+      governingVersion: 'contract@1',
+      unmetPrerequisites: [],
+    },
+    result,
+    runs: [run, { ...run, id: 'cohort:synthetic', productionReady: false, readinessScope: 'toy' }],
+  }
+  const markup = renderToStaticMarkup(createElement(CohortResults, { response }))
+  for (const expected of [
+    /sole primary estimand/,
+    /House-only readiness/,
+    /Exploratory/,
+    /Historical Consensus: Unavailable/,
+    /Strict sign disagreement/,
+    /null\/inconclusive/,
+    /95%|Interval unavailable/,
+    /2 members/,
+    /1 securities/,
+    /3 source filings/,
+    /2 anchor sessions/,
+    /2 episodes/,
+    /2 months/,
+    /retained-snapshot/,
+    /missing_bar/,
+    /retained-32/,
+  ]) {
+    assert.match(markup, expected)
+  }
+  assert.match(markup, /0\.0000000/)
+  assert.doesNotMatch(markup, /cohort:synthetic/)
 })
 
 test('Analysis displays per-metric missingness and run provenance and withholds synthetic runs', () => {

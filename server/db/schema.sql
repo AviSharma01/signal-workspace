@@ -245,3 +245,14 @@ CREATE TABLE IF NOT EXISTS analysis_runs (
   CHECK ((population = 'real' AND readiness_scope = 'production') OR
          (population IN ('test', 'evaluation') AND readiness_scope != 'production'))
 );
+
+-- #33 consumes retained #32 outputs, without altering or recomputing them.
+CREATE TABLE IF NOT EXISTS analysis_cohort_runs (
+  id TEXT PRIMARY KEY,
+  population TEXT NOT NULL CHECK (population IN ('real', 'test', 'evaluation')),
+  source_run_id TEXT NOT NULL,
+  method_version TEXT NOT NULL,
+  calculated_at INTEGER NOT NULL,
+  run_json TEXT NOT NULL,
+  FOREIGN KEY (source_run_id) REFERENCES analysis_runs(id)
+);
