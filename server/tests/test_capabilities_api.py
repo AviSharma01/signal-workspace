@@ -122,6 +122,29 @@ class CapabilityApiTest(unittest.TestCase):
         for forbidden in ("authorization", "api_key", "access_token", "provider_response"):
             self.assertNotIn(forbidden, response_text)
 
+class MarketReadinessApiTest(unittest.TestCase):
+    def test_catalog_exposes_exact_production_gates_after_synthetic_evaluation(self):
+        from market_fixture import fixture, SyntheticAdapter
+        from market_conformance import MarketConformanceApplication
+        scope, evidence = fixture()
+        self.assertEqual(MarketConformanceApplication().evaluate(scope, evidence, adapter=SyntheticAdapter())['readiness']['availability'], 'available')
+        api = FastAPI()
+        api.include_router(capability_router.router)
+        with TestClient(api) as client:
+            payload = client.get('/api/capabilities').json()
+        capabilities = {item['id']: item for item in payload['capabilities']}
+        readiness = capabilities['market.data_readiness']
+        self.assertEqual(readiness['evaluationScope'], 'production')
+        self.assertEqual(readiness['availability'], 'unavailable')
+        codes = {item['code'] for item in readiness['unmetPrerequisites']}
+        self.assertIn('split_handling', codes)
+        self.assertIn('explicit_provider_approval', codes)
+        self.assertTrue(all(item['status'] == 'unsupported' for item in readiness['unmetPrerequisites']))
+        for key in ('analysis.market_event_study', 'market.outcomes', 'monitoring.market_checks', 'monitoring.market_anomaly_detection', 'investigation.market_triggered'):
+            self.assertEqual(capabilities[key]['availability'], 'unavailable')
+            self.assertTrue(codes.issubset({item['code'] for item in capabilities[key]['unmetPrerequisites']}))
+            self.assertNotIn('result', capabilities[key])
+
 
 if __name__ == "__main__":
     unittest.main()

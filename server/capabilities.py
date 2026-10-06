@@ -4,6 +4,8 @@ import time
 from collections.abc import Callable
 from typing import Any, Literal
 
+from market_conformance import production_market_readiness
+
 
 CAPABILITY_CONTRACT_VERSION = "signal-capabilities@1"
 
@@ -67,7 +69,10 @@ def market_unavailable(
         "signal-v2-market-data-contract@1",
         evaluated_at=evaluated_at,
         reason_codes=["market_data_contract_unsatisfied", *(extra_reason_codes or [])],
-        unmet_prerequisites=[{"code": code, "detail": code.replace("_", " ")} for code in prerequisites],
+        unmet_prerequisites=[
+            *[{"code": code, "detail": code.replace("_", " ")} for code in prerequisites],
+            *production_market_readiness(evaluated_at=evaluated_at)["unmet_prerequisites"],
+        ],
     )
 
 
@@ -134,6 +139,7 @@ class CapabilityApplication:
             disclosure_detail = "No chamber has passed every approved disclosure-source readiness gate."
 
         capabilities = [
+            production_market_readiness(evaluated_at=evaluated_at),
             capability_state(
                 "disclosure.evidence_retention",
                 "Disclosure evidence retention",

@@ -1,0 +1,222 @@
+{
+  "five_complete_years_plus_current": {
+    "start": "2021-01-01",
+    "end": "2026-10-06",
+    "gaps": []
+  },
+  "retained_inputs_permitted": {
+    "permission": "fixture-only"
+  },
+  "required_access_and_retention": {
+    "cost": 0,
+    "currency": "USD"
+  },
+  "ordinary_session": {
+    "open_ms": 1772807400000,
+    "close_ms": 1772830800000,
+    "ohlcv": [
+      100,
+      110,
+      90,
+      105,
+      1000
+    ]
+  },
+  "extended_hours_excluded": {
+    "regular_session_only": true
+  },
+  "feed_venue_definitions": {
+    "prices": "toy consolidated",
+    "volume": "toy consolidated shares"
+  },
+  "holiday": {
+    "date": "2026-07-03",
+    "session": null
+  },
+  "early_close": {
+    "date": "2026-11-27",
+    "close_utc": "18:00"
+  },
+  "dst_timezone": {
+    "before_utc": "14:30",
+    "after_utc": "13:30",
+    "timezone": "America/New_York"
+  },
+  "ticker_rename": {
+    "old_symbol": "OLD",
+    "new_symbol": "NEW",
+    "security": "toy-A"
+  },
+  "ticker_reuse": {
+    "old_security": "toy-A",
+    "new_security": "toy-B",
+    "joined": false
+  },
+  "listing_change": {
+    "old_listing": "toy-X",
+    "new_listing": "toy-Y",
+    "continuation": "unavailable"
+  },
+  "ambiguous_identity": {
+    "measurement": "unavailable",
+    "reason": "ambiguous_security"
+  },
+  "split": {
+    "ratio": "2:1",
+    "raw_before": 100,
+    "raw_after": 50,
+    "economic_factor": 1
+  },
+  "cash_distribution": {
+    "ex_date": "2026-03-09",
+    "amount": 2,
+    "currency": "USD"
+  },
+  "non_cash_action": {
+    "type": "non_cash",
+    "measurement": "unavailable"
+  },
+  "merger": {
+    "type": "merger",
+    "measurement": "unavailable"
+  },
+  "spin_off": {
+    "type": "spin_off",
+    "measurement": "unavailable"
+  },
+  "delisting": {
+    "type": "delisting",
+    "measurement": "unavailable",
+    "terminal_return": null
+  },
+  "currency_and_price_volume_units": {
+    "currency": "USD",
+    "price": "USD/share",
+    "volume": "shares"
+  },
+  "missing_daily_bar": {
+    "date": "2026-03-10",
+    "measurement": "unavailable",
+    "filled": false
+  },
+  "gap_backfill": {
+    "expected": 3,
+    "observed": 2,
+    "gaps": [
+      "2026-03-10"
+    ],
+    "filled": false
+  },
+  "daily_acquisition": {
+    "attempts": 1,
+    "last_success_ms": 1772830800000,
+    "latest_session": "2026-03-06",
+    "finality": "unknown"
+  },
+  "downtime_catch_up": {
+    "missed_sessions": [
+      "2026-03-09"
+    ],
+    "recovered_sessions": [
+      "2026-03-09"
+    ],
+    "failures": []
+  },
+  "later_revision": {
+    "earlier_close": 105,
+    "later_close": 106,
+    "earlier_preserved": true
+  },
+  "unchanged_retrieval": {
+    "observations": 2,
+    "versions": 1,
+    "bars": 1
+  },
+  "changed_retrieval": {
+    "observations": 2,
+    "versions": 2,
+    "earlier_preserved": true
+  },
+  "event_session_join": {
+    "date": "2026-03-06",
+    "exact_open_boundary_next_session": "2026-03-09"
+  },
+  "historical_security_join": {
+    "security": "toy-A",
+    "listing": "toy-X",
+    "symbol": "OLD"
+  },
+  "representative_calculation": {
+    "raw_open": 100,
+    "raw_close": 105,
+    "close_open_factor": "1.05"
+  },
+  "provider_disagreement": {
+    "source_a_close": 105,
+    "source_b_close": 106,
+    "measurement": "unavailable",
+    "averaged": false
+  },
+  "later_identity_excluded": {
+    "earlier_identity": "unresolved",
+    "later_identity": "toy-A",
+    "earlier_preserved": true
+  },
+  "later_correction_excluded": {
+    "original_predictor": 1,
+    "replayed_predictor": 1,
+    "later_corrected_view": 2
+  },
+  "retained_provenance": {
+    "inputs_retained": true
+  },
+  "reproduction": {
+    "first": "1.05",
+    "replayed": "1.05"
+  },
+  "requests": {
+    "count": 3
+  },
+  "elapsed": {
+    "milliseconds": 12
+  },
+  "peak_memory": {
+    "bytes": 4096
+  },
+  "retained_storage": {
+    "bytes": 1024
+  },
+  "backfill_workload": {
+    "sessions": 3,
+    "requests": 1
+  },
+  "acquisition_workload": {
+    "sessions": 1,
+    "requests": 1
+  },
+  "catch_up_workload": {
+    "sessions": 1,
+    "requests": 1
+  },
+  "revision_workload": {
+    "sessions": 1,
+    "requests": 1
+  },
+  "join_workload": {
+    "events": 2,
+    "security_joins": 2,
+    "session_joins": 2
+  },
+  "calculation_workload": {
+    "calculations": 1,
+    "method": "toy-close-open@1"
+  },
+  "bounded_revision_refresh": {
+    "policy_version": "toy-bounded-policy@1",
+    "session_scope": [
+      "2026-03-06"
+    ],
+    "requests": 1,
+    "earlier_preserved": true
+  }
+}
