@@ -1,0 +1,165 @@
+{
+    "count": 8,
+    "next": null,
+    "prev": null,
+    "results": [
+        {
+            "effective_date": "2026-10-14",
+            "effective_timing": "Pending before the Open",
+            "event": "aa490eb2-5af1-43ce-b5c8-8209f0cdd13a",
+            "published_at": "2026-10-08T11:34:07.702481-04:00",
+            "type": "suspend",
+            "content": {
+                "subject_to": "Subject to effectiveness of the Merger",
+                "security": {
+                    "dmm": "GTS SECURITIES LLC",
+                    "post": 8,
+                    "panel": "I",
+                    "status": "Active",
+                    "symbol": "CCO",
+                    "designation": null,
+                    "is_foreign_private_issuer": false
+                },
+                "suspension_date": "October 14, 2026"
+            },
+            "is_cancelled": false
+        },
+        {
+            "event": "ee431de1-b0b5-4692-ab4a-2b759be15e74",
+            "published_at": "2026-10-08T11:34:07.667412-04:00",
+            "type": "merger",
+            "content": {
+                "target": {
+                    "dmm": "GTS SECURITIES LLC",
+                    "post": 8,
+                    "panel": "I",
+                    "status": "Active",
+                    "symbol": "CCO",
+                    "designation": null,
+                    "is_foreign_private_issuer": false
+                }
+            },
+            "is_cancelled": false
+        },
+        {
+            "event": "a5853b0b-7c32-4fa7-a2c8-4555bac6b71b",
+            "published_at": "2026-10-08T10:47:39.512398-04:00",
+            "type": "change-underlying-share-ratio",
+            "content": {
+                "security": {
+                    "dmm": "CITADEL SECURITIES LLC",
+                    "post": 5,
+                    "panel": "H",
+                    "status": "Active",
+                    "symbol": "AMTD",
+                    "designation": null,
+                    "is_foreign_private_issuer": true
+                }
+            },
+            "is_cancelled": false
+        },
+        {
+            "effective_date": "2026-10-19",
+            "effective_timing": "Effective before the Open",
+            "event": "9b3e4f3c-a5f6-4b68-85c8-84cf4ed42b43",
+            "published_at": "2026-10-08T10:47:39.383905-04:00",
+            "type": "suspend",
+            "content": {
+                "security": {
+                    "dmm": "CITADEL SECURITIES LLC",
+                    "post": 5,
+                    "panel": "H",
+                    "status": "Active",
+                    "symbol": "AMTD",
+                    "designation": null,
+                    "is_foreign_private_issuer": true
+                },
+                "suspension_date": "October 19, 2026"
+            },
+            "is_cancelled": false
+        },
+        {
+            "effective_date": "2026-10-19",
+            "effective_timing": "Effective before the Open",
+            "event": "15c4c375-dd29-4011-9c4d-10c4681b9402",
+            "published_at": "2026-10-08T10:47:39.264484-04:00",
+            "type": "admit",
+            "content": {
+                "security": {
+                    "dmm": "CITADEL SECURITIES LLC",
+                    "post": null,
+                    "panel": null,
+                    "status": null,
+                    "symbol": "AMTD",
+                    "designation": null,
+                    "is_foreign_private_issuer": true
+                }
+            },
+            "is_cancelled": false
+        },
+        {
+            "effective_date": "2026-10-13",
+            "effective_timing": "Effective before the Open",
+            "event": "82e94c00-28f6-42e0-8015-6b8a7b2de3d9",
+            "published_at": "2026-10-08T10:42:45.574576-04:00",
+            "type": "suspend-voluntary",
+            "content": {
+                "security": {
+                    "dmm": "GTS SECURITIES LLC",
+                    "post": 8,
+                    "panel": "Q",
+                    "status": "Active",
+                    "symbol": "OBK",
+                    "designation": null,
+                    "is_foreign_private_issuer": false
+                }
+            },
+            "is_cancelled": false
+        },
+        {
+            "effective_date": "2026-09-08",
+            "effective_timing": "Effective before the Open",
+            "event": "e3e2d609-729b-41e6-a295-0766cfd69b66",
+            "published_at": "2026-10-08T08:46:14.230495-04:00",
+            "type": "transferable-rights",
+            "content": {
+                "security": {
+                    "dmm": "CITADEL SECURITIES LLC",
+                    "post": 6,
+                    "panel": "D",
+                    "status": "Active",
+                    "symbol": "NMCO",
+                    "designation": null,
+                    "is_foreign_private_issuer": false
+                },
+                "ex_date": "2026-09-08"
+            },
+            "is_cancelled": false
+        },
+        {
+            "effective_date": "2026-10-23",
+            "effective_timing": "Effective before the Open",
+            "event": "356e0b29-596b-4be5-88d2-256851aada9d",
+            "published_at": "2026-10-08T07:25:14.955353-04:00",
+            "type": "dividend",
+            "content": {
+                "first_day_of_due_bills": "2026-10-09",
+                "return_of_capital": "1.74000000000000000000",
+                "security": {
+                    "dmm": "CITADEL SECURITIES LLC",
+                    "post": 6,
+                    "panel": "E",
+                    "status": "Active",
+                    "symbol": "ELME",
+                    "designation": null,
+                    "is_foreign_private_issuer": false
+                },
+                "due_bills_off": "2026-10-23",
+                "last_day_of_due_bills": "2026-10-22",
+                "ex_date": "2026-10-23",
+                "due_bills_settlement_date": "2026-10-23"
+            },
+            "is_cancelled": false
+        }
+    ]
+}
