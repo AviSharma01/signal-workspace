@@ -1,0 +1,64 @@
+{
+  "status": "PASS",
+  "recorded_reproduction_date": "2026-10-15",
+  "evaluation_start": "2021-01-01",
+  "evaluation_cutoff": "2026-10-08",
+  "sessions": 1448,
+  "closed_weekdays": 57,
+  "session_counts": {
+    "2021": 252,
+    "2022": 251,
+    "2023": 250,
+    "2024": 252,
+    "2025": 250,
+    "2026": 193
+  },
+  "early_closes": {
+    "2021": [
+      "2021-11-26"
+    ],
+    "2022": [
+      "2022-11-25"
+    ],
+    "2023": [
+      "2023-07-03",
+      "2023-11-24"
+    ],
+    "2024": [
+      "2024-07-03",
+      "2024-11-29",
+      "2024-12-24"
+    ],
+    "2025": [
+      "2025-07-03",
+      "2025-11-28",
+      "2025-12-24"
+    ],
+    "2026": []
+  },
+  "dst_timestamp_controls": 44,
+  "year_boundary_pairs": 5,
+  "aliases": [
+    "XNAS",
+    "ARCX",
+    "XASE"
+  ],
+  "date_or_timestamp_mismatches": 0,
+  "schedule_serialization": "UTF-8 CSV, no header, date/open_UTC/close_UTC, YYYY-MM-DD / YYYY-MM-DDTHH:MM:SSZ, LF rows including final LF",
+  "schedule_sha256": "120294a88f1080277967d8d8a891553d912f7f944716918d19e98837cbe70cf1",
+  "expectations_sha256": "e3a972b6834392a7299394158710c2704b9908eac37738388d1478ccf8f207c6",
+  "validator_sha256": "4a7ec1b791d49bfada8c0973cb61f7acc0f3cd0562781e99fddd58490878a687",
+  "python_version": "3.13.15",
+  "packages": {
+    "exchange_calendars": "4.13.2",
+    "korean_lunar_calendar": "0.4.0",
+    "numpy": "2.5.3",
+    "pandas": "3.0.6",
+    "pyluach": "2.3.0",
+    "python-dateutil": "2.9.0.post0",
+    "six": "1.17.0",
+    "toolz": "1.2.0",
+    "tzdata": "2026.5"
+  },
+  "historical_digest_status": "Original serialization and artifact unavailable; original digest is not verified by this reproduction"
+}
