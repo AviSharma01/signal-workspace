@@ -1,0 +1,1076 @@
+{
+  "schema_version": 1,
+  "recorded_on": "2026-10-15",
+  "repository": "AviSharma01/signal-workspace",
+  "branch": "feat/signal-v2",
+  "baseline_head": "5b1c21a1b2de6d3f7b0afe946cf40fbbd954c5d8",
+  "committed_groups": [
+    {
+      "group": "G1",
+      "commit": "e937dd8c2dfd8e9270b06e3867111516710c149e",
+      "files": [
+        "docs/adr/0001-free-first-operating-mode.md"
+      ],
+      "disposition": "Confirmed committed and unchanged."
+    },
+    {
+      "group": "G2",
+      "commit": "5b1c21a1b2de6d3f7b0afe946cf40fbbd954c5d8",
+      "files": [
+        "docs/research/free-market-data-provider-screen-2026-10-07.md",
+        "docs/research/stooq-event-source-check-2026-10-07.md"
+      ],
+      "disposition": "Confirmed committed and unchanged."
+    },
+    {
+      "group": "R1",
+      "commit": "220f7267318e4d9286909c4a6f455ef50d587764",
+      "files": [
+        "docs/research/exchange-session-calendar-validation-2026-10-09.md",
+        "docs/research/experiments/exchange-calendar-2026-10-09/README.md",
+        "docs/research/experiments/exchange-calendar-2026-10-09/expectations.json",
+        "docs/research/experiments/exchange-calendar-2026-10-09/result.json",
+        "docs/research/experiments/exchange-calendar-2026-10-09/validate.py"
+      ],
+      "disposition": "Confirmed committed; commit and HEAD bytes match the recorded SHA-256 hashes."
+    },
+    {
+      "group": "R2",
+      "commit": "a8d60c7f71b55161e53c460acabcc898f85dcdeb",
+      "files": [
+        "docs/research/stooq-technical-screen-2026-10-07.md",
+        "docs/research/twelve-data-basic-screen-2026-10-08.md"
+      ],
+      "disposition": "Confirmed committed; commit and HEAD bytes match the recorded SHA-256 hashes."
+    },
+    {
+      "group": "R3",
+      "commit": "44957a7f5804d125e3675d8f3a48f6b9b629b281",
+      "files": [
+        "docs/research/free-corporate-action-component-screen-2026-10-08.md",
+        "docs/research/nyse-public-mef-screen-2026-10-09.md",
+        "docs/research/evidence/nyse-public-mef-2026-10-09/current.headers",
+        "docs/research/evidence/nyse-public-mef-2026-10-09/manifest.md",
+        "docs/research/evidence/nyse-public-mef-2026-10-09/mef_public.json",
+        "docs/research/evidence/nyse-public-mef-2026-10-09/public-index.html",
+        "docs/research/evidence/nyse-public-mef-2026-10-09/samples-index.html"
+      ],
+      "disposition": "Confirmed committed; commit and HEAD bytes match the recorded SHA-256 hashes."
+    },
+    {
+      "group": "R4",
+      "commit": "2af95a44e2f2903d842f7d8beb5b433aff7979e5",
+      "files": [
+        "docs/research/historical-security-identity-screen-2026-10-09.md",
+        "docs/research/openfigi-meta-metv-experiment-2026-10-09.md",
+        "docs/research/artifacts/openfigi-meta-metv-2026-10-09/hashes.json",
+        "docs/research/artifacts/openfigi-meta-metv-2026-10-09/request.json",
+        "docs/research/artifacts/openfigi-meta-metv-2026-10-09/response.headers",
+        "docs/research/artifacts/openfigi-meta-metv-2026-10-09/response.json",
+        "docs/research/artifacts/openfigi-meta-metv-2026-10-09/retrieval-completed-utc.txt",
+        "docs/research/artifacts/openfigi-meta-metv-2026-10-09/retrieval-started-utc.txt",
+        "docs/research/artifacts/openfigi-meta-metv-2026-10-09/transfer.sanitized.json"
+      ],
+      "disposition": "Confirmed committed; commit and HEAD bytes match the recorded SHA-256 hashes."
+    },
+    {
+      "group": "R5",
+      "commit": "3367db39428f9f7158289c4903a71f7c6ad7cd67",
+      "files": [
+        "docs/research/free-ordinary-cash-dividend-validation-2026-10-09.md"
+      ],
+      "disposition": "Confirmed committed; commit and HEAD bytes match the recorded SHA-256 hashes."
+    },
+    {
+      "group": "R6",
+      "commit": "d6df1449b41895a755d883956a37f1ddd25c3bff",
+      "files": [
+        "docs/research/historical-security-identity-feasibility-workload-2026-10-09.md"
+      ],
+      "disposition": "Confirmed committed; commit and HEAD bytes match the recorded SHA-256 hashes."
+    }
+  ],
+  "scope": "Research documentation/artifact remediation only. No Git state mutation, production-code change, issue/readiness edit, methodology edit or ADR edit.",
+  "counts": {
+    "committed_publication_files": 25,
+    "pending_R7_files": 2,
+    "untracked": 90,
+    "excluded_and_locally_held": 88,
+    "tracked_modified": 0,
+    "staged": 0,
+    "ready_after_fixes": 0
+  },
+  "status_note": "Current statuses are a pre-R7 snapshot at verification_head: git_status uses two-character Git porcelain codes, two spaces for clean tracked R1-R6 files and ?? for pending R7 and local-only excluded files. Historical untracked counts/statuses are retained only in remediation_snapshot and git_status_at_remediation. R7 contains exactly its two listed files; no partial-file staging is required.",
+  "verification_scope": [
+    "All six R1-R6 commit path sets exactly match their groups; all 25 committed file bytes and SHA-256 hashes agree with their commits and HEAD.",
+    "All non-self publication/exclusion hashes, exact untracked partition, clean tracked/index state, publication-local links and anchors, JSON/Python syntax and sensitivity checks verified at verification_head.",
+    "R7 is only the synthesis and this manifest; its sole null self hash is explicitly excluded by hash_convention. Synthesis remains aligned with the accepted ADR and bounded research; no #31, methodology or application-readiness change is made.",
+    "Git whitespace checks preserve the four original source-byte CRLF exceptions listed below. Application tests/build/lint/typechecks were not rerun for this documentation-only check."
+  ],
+  "git_whitespace_exceptions": {
+    "reason": "Git --no-index --check flags original CRLF bytes in four captured HTTP/header/index artifacts, plus the required final HTTP header separator. These are unchanged, hash-verified source bytes; normalizing them would alter retained evidence. Authored documents, JSON and Python have no whitespace/conflict issues. No source-byte rewrite is recommended.",
+    "files": [
+      "docs/research/evidence/nyse-public-mef-2026-10-09/current.headers",
+      "docs/research/evidence/nyse-public-mef-2026-10-09/public-index.html",
+      "docs/research/evidence/nyse-public-mef-2026-10-09/samples-index.html",
+      "docs/research/artifacts/openfigi-meta-metv-2026-10-09/response.headers"
+    ]
+  },
+  "remaining_fixes": [],
+  "groups": [
+    {
+      "id": "R1",
+      "previous_group": "G3",
+      "purpose": "Reproduce the bounded calendar evaluation with independent exchange expectations; qualify the unavailable original digest.",
+      "message": "docs(research): make exchange-calendar validation reproducible",
+      "dependencies": [],
+      "files": [
+        {
+          "path": "docs/research/exchange-session-calendar-validation-2026-10-09.md",
+          "git_status": "  ",
+          "origin": "pre-existing untracked",
+          "changed_by_remediation": true,
+          "sha256": "249158918e99f9d5454df4cb3931d62603bbc33d803dbfd74b6e4ea9c9be917f",
+          "git_status_at_remediation": "??"
+        },
+        {
+          "path": "docs/research/experiments/exchange-calendar-2026-10-09/README.md",
+          "git_status": "  ",
+          "origin": "created by this remediation",
+          "changed_by_remediation": true,
+          "sha256": "6d88fd0faeac0681dfb12dcd9a4b47c092bc26e5ee8ec7ede2a0d2d04e4ea941",
+          "git_status_at_remediation": "??"
+        },
+        {
+          "path": "docs/research/experiments/exchange-calendar-2026-10-09/expectations.json",
+          "git_status": "  ",
+          "origin": "created by this remediation",
+          "changed_by_remediation": true,
+          "sha256": "e3a972b6834392a7299394158710c2704b9908eac37738388d1478ccf8f207c6",
+          "git_status_at_remediation": "??"
+        },
+        {
+          "path": "docs/research/experiments/exchange-calendar-2026-10-09/result.json",
+          "git_status": "  ",
+          "origin": "created by this remediation",
+          "changed_by_remediation": true,
+          "sha256": "314a19c7f3cc7af52a990708c7329df8f8e50fafa3d1e63faf050b6377e79ccf",
+          "git_status_at_remediation": "??"
+        },
+        {
+          "path": "docs/research/experiments/exchange-calendar-2026-10-09/validate.py",
+          "git_status": "  ",
+          "origin": "created by this remediation",
+          "changed_by_remediation": true,
+          "sha256": "4a7ec1b791d49bfada8c0973cb61f7acc0f3cd0562781e99fddd58490878a687",
+          "git_status_at_remediation": "??"
+        }
+      ],
+      "verification": [
+        "Offline validator --check PASS: 1448 sessions, 57 closed weekdays, 10 early closes, 44 DST timestamp controls, 5 year boundaries, 3 aliases and no row mismatches.",
+        "Recorded script/input hashes and pinned runtime match; negative closure and early-close controls rejected."
+      ],
+      "concerns": [
+        "Original 98b852 digest remains unverified; new explicit serialization reproduces 120294a88f1080277967d8d8a891553d912f7f944716918d19e98837cbe70cf1.",
+        "Historical evaluation cutoff remains 2026-10-08. Candidate integration only; no provider/session or production readiness approval."
+      ],
+      "readiness": "READY",
+      "publication_status": "COMMITTED"
+    },
+    {
+      "id": "R2",
+      "previous_group": "G5/G6 reports only",
+      "purpose": "Publish independently authored provider research without excluded datasets, copied documentation or repository replay claims.",
+      "message": "docs(research): publish provider screens without restricted inputs",
+      "dependencies": [
+        "G2 (committed)"
+      ],
+      "files": [
+        {
+          "path": "docs/research/stooq-technical-screen-2026-10-07.md",
+          "git_status": "  ",
+          "origin": "pre-existing untracked",
+          "changed_by_remediation": true,
+          "sha256": "dd64c446fefcc90b477903feedada54aac98e9d33c2a68d9fde5fbe98c46f499",
+          "git_status_at_remediation": "??"
+        },
+        {
+          "path": "docs/research/twelve-data-basic-screen-2026-10-08.md",
+          "git_status": "  ",
+          "origin": "pre-existing untracked",
+          "changed_by_remediation": true,
+          "sha256": "552c616825e82aea0a0f6eea16640fa1c44252857a792b9f373ef040e00dbc3b",
+          "git_status_at_remediation": "??"
+        }
+      ],
+      "verification": [
+        "Read both complete reports; provider quote/data examples removed and excluded-artifact Markdown links replaced with explicit local-only provenance.",
+        "Original local verifiers passed without modifying either bundle; this is integrity checking, not permission to publish the bundles."
+      ],
+      "concerns": [
+        "Underlying bundles remain unchanged, locally held and NOT READY because retention/redistribution rights are unresolved.",
+        "Committed reports cannot independently reproduce the empirical measurements without excluded inputs. Published summaries do not supply raw OHLCV or copied provider documentation."
+      ],
+      "readiness": "READY",
+      "publication_status": "COMMITTED"
+    },
+    {
+      "id": "R3",
+      "previous_group": "G7 corporate actions/NYSE",
+      "purpose": "Clarify public corporate-action evidence and narrow NYSE public-use, archive and retention claims.",
+      "message": "docs(research): clarify corporate-action and public MEF evidence",
+      "dependencies": [
+        "R2"
+      ],
+      "files": [
+        {
+          "path": "docs/research/free-corporate-action-component-screen-2026-10-08.md",
+          "git_status": "  ",
+          "origin": "pre-existing untracked",
+          "changed_by_remediation": true,
+          "sha256": "a8ecea7717430784eb1752673c829acbfdd2c846f7d8a6200260751a0f27ae4a",
+          "git_status_at_remediation": "??"
+        },
+        {
+          "path": "docs/research/nyse-public-mef-screen-2026-10-09.md",
+          "git_status": "  ",
+          "origin": "pre-existing untracked",
+          "changed_by_remediation": true,
+          "sha256": "ad1440a79d554e9f4a94cfc7e52b3a154c8923238779e2aa27082899f613e600",
+          "git_status_at_remediation": "??"
+        },
+        {
+          "path": "docs/research/evidence/nyse-public-mef-2026-10-09/current.headers",
+          "git_status": "  ",
+          "origin": "pre-existing untracked",
+          "changed_by_remediation": false,
+          "sha256": "04a34c34fe096b28b6dbdae996d82cf99deaf4def399fd8a6e50db281d28b76d",
+          "git_status_at_remediation": "??"
+        },
+        {
+          "path": "docs/research/evidence/nyse-public-mef-2026-10-09/manifest.md",
+          "git_status": "  ",
+          "origin": "pre-existing untracked",
+          "changed_by_remediation": true,
+          "sha256": "4032ddb1d01103dbbe008704faefa1bd6aa368d03d2ce6d47c58962ef79166c6",
+          "git_status_at_remediation": "??"
+        },
+        {
+          "path": "docs/research/evidence/nyse-public-mef-2026-10-09/mef_public.json",
+          "git_status": "  ",
+          "origin": "pre-existing untracked",
+          "changed_by_remediation": false,
+          "sha256": "4da481c743427e9e9475ef46b0588d51dcf5450d89456d8a2f94357a17c9c1c7",
+          "git_status_at_remediation": "??"
+        },
+        {
+          "path": "docs/research/evidence/nyse-public-mef-2026-10-09/public-index.html",
+          "git_status": "  ",
+          "origin": "pre-existing untracked",
+          "changed_by_remediation": false,
+          "sha256": "228b64f0a919c1942a91326708164db97f0410432543c75672063436f16bc956",
+          "git_status_at_remediation": "??"
+        },
+        {
+          "path": "docs/research/evidence/nyse-public-mef-2026-10-09/samples-index.html",
+          "git_status": "  ",
+          "origin": "pre-existing untracked",
+          "changed_by_remediation": false,
+          "sha256": "ca537f7d9e6685b155ac90b31045fe594d73be30e38a8c346746a9693022de8f",
+          "git_status_at_remediation": "??"
+        }
+      ],
+      "verification": [
+        "Four original NYSE artifacts match the retained manifest hashes; 8 records, 7 distinct types, 6 effective-date fields, all cancellation flags false.",
+        "Reviewed specific express public-use/redistribution grant and SEC public-filing reuse policy; no commercial provider dataset proposed."
+      ],
+      "concerns": [
+        "Specific NYSE public subset only; no complete free historical archive, perpetual removed-version right or production certification established.",
+        "Earlier MID browser observation is not present in the later retained packet; report now states that limit."
+      ],
+      "readiness": "READY",
+      "publication_status": "COMMITTED"
+    },
+    {
+      "id": "R4",
+      "previous_group": "G4 identity screen/OpenFIGI",
+      "purpose": "Preserve evidence-backed identity distinctions and publish a transparent allowlist derivative of the transfer metadata.",
+      "message": "docs(research): preserve historical identity evidence and sanitized FIGI receipt",
+      "dependencies": [
+        "R2",
+        "R3"
+      ],
+      "files": [
+        {
+          "path": "docs/research/historical-security-identity-screen-2026-10-09.md",
+          "git_status": "  ",
+          "origin": "pre-existing untracked",
+          "changed_by_remediation": true,
+          "sha256": "ad75804ac04b3e4c6d4e67e6404f114143a7e0cf1e6d2241748266bc3041aaff",
+          "git_status_at_remediation": "??"
+        },
+        {
+          "path": "docs/research/openfigi-meta-metv-experiment-2026-10-09.md",
+          "git_status": "  ",
+          "origin": "pre-existing untracked",
+          "changed_by_remediation": true,
+          "sha256": "ed226d6051ba745423b33781b976d0056a508f758f716f9c025c556926f0bc19",
+          "git_status_at_remediation": "??"
+        },
+        {
+          "path": "docs/research/artifacts/openfigi-meta-metv-2026-10-09/hashes.json",
+          "git_status": "  ",
+          "origin": "pre-existing untracked",
+          "changed_by_remediation": true,
+          "sha256": "ccd8d0cf04ddfe37cd185fc7c1c89454d284b8e5c5cd399f5a6c83f9d0babede",
+          "git_status_at_remediation": "??"
+        },
+        {
+          "path": "docs/research/artifacts/openfigi-meta-metv-2026-10-09/request.json",
+          "git_status": "  ",
+          "origin": "pre-existing untracked",
+          "changed_by_remediation": false,
+          "sha256": "21513c8d577088fb1d007159b4c9f85fbf760287110eb19f67035033939f54ed",
+          "git_status_at_remediation": "??"
+        },
+        {
+          "path": "docs/research/artifacts/openfigi-meta-metv-2026-10-09/response.headers",
+          "git_status": "  ",
+          "origin": "pre-existing untracked",
+          "changed_by_remediation": false,
+          "sha256": "4a16558149a2e442a0b8de6e6ab5f16c001f5d3fdca12ee719867aae0fbc59fa",
+          "git_status_at_remediation": "??"
+        },
+        {
+          "path": "docs/research/artifacts/openfigi-meta-metv-2026-10-09/response.json",
+          "git_status": "  ",
+          "origin": "pre-existing untracked",
+          "changed_by_remediation": false,
+          "sha256": "4a526f649ec4f14dcd1049ed521f1262a302ebc0f3482a612a4e3fd0fa4bad68",
+          "git_status_at_remediation": "??"
+        },
+        {
+          "path": "docs/research/artifacts/openfigi-meta-metv-2026-10-09/retrieval-completed-utc.txt",
+          "git_status": "  ",
+          "origin": "pre-existing untracked",
+          "changed_by_remediation": false,
+          "sha256": "ce20bd5443af48f52d99805591c8e6e969b64a93634235708b0501404c15fd6c",
+          "git_status_at_remediation": "??"
+        },
+        {
+          "path": "docs/research/artifacts/openfigi-meta-metv-2026-10-09/retrieval-started-utc.txt",
+          "git_status": "  ",
+          "origin": "pre-existing untracked",
+          "changed_by_remediation": false,
+          "sha256": "8ef734bb2a73b20c1eac784c79965dd3757aa6d03da4369551f21661e2286ba3",
+          "git_status_at_remediation": "??"
+        },
+        {
+          "path": "docs/research/artifacts/openfigi-meta-metv-2026-10-09/transfer.sanitized.json",
+          "git_status": "  ",
+          "origin": "created by this remediation",
+          "changed_by_remediation": true,
+          "sha256": "ea061461f112b1c5eff78ad7fdecfd9d35e24ca58a9a4a000f97b5f08881d0c0",
+          "git_status_at_remediation": "??"
+        }
+      ],
+      "verification": [
+        "All six published artifact hashes and byte counts match hashes.json; original request, response, headers and timestamps remain byte-for-byte unchanged.",
+        "Sanitized receipt values match the original allowlist; omitted-field inventory is complete; source digest/size match; private network/certificate/runtime metadata excluded."
+      ],
+      "concerns": [
+        "Original transfer.json remains unchanged and local only; sanitized derivative is explicitly labeled and never represented as the original.",
+        "Current FIGI enrichment does not establish historical ticker ownership, validity intervals or point-in-time availability."
+      ],
+      "readiness": "READY",
+      "publication_status": "COMMITTED"
+    },
+    {
+      "id": "R5",
+      "previous_group": "G7 dividends",
+      "purpose": "Publish bounded dividend completeness and licensing failure with corrected SEC permission scope.",
+      "message": "docs(research): record free dividend completeness limits",
+      "dependencies": [
+        "R1",
+        "R3",
+        "R4"
+      ],
+      "files": [
+        {
+          "path": "docs/research/free-ordinary-cash-dividend-validation-2026-10-09.md",
+          "git_status": "  ",
+          "origin": "pre-existing untracked",
+          "changed_by_remediation": true,
+          "sha256": "6d56aa7a638cdd6a9623b416aecf433f4c51144f752cc3176b1cca0790266762",
+          "git_status_at_remediation": "??"
+        }
+      ],
+      "verification": [
+        "Reviewed cited source/rights scope and internal gate consistency; local dependency links resolve in proposed order.",
+        "No State Street workbook, Nasdaq dividend response or other prohibited provider dataset included."
+      ],
+      "concerns": [
+        "Free complete dividend route still fails; permission to reuse EDGAR filings does not create complete action discovery, revision coverage or issuer-site rights.",
+        "Dated research observations are not newly acquired evidence or production readiness."
+      ],
+      "readiness": "READY",
+      "publication_status": "COMMITTED"
+    },
+    {
+      "id": "R6",
+      "previous_group": "G4 bounded identity workload",
+      "purpose": "Correct TWTR point-in-time claims and preserve economic dates with unsupported publication precision UNKNOWN.",
+      "message": "docs(research): qualify bounded identity feasibility and timing",
+      "dependencies": [
+        "R1",
+        "R4",
+        "R5"
+      ],
+      "files": [
+        {
+          "path": "docs/research/historical-security-identity-feasibility-workload-2026-10-09.md",
+          "git_status": "  ",
+          "origin": "pre-existing untracked",
+          "changed_by_remediation": true,
+          "sha256": "3c74c26850e82d3383051be2f9b961f187a8dac5a8f2c0fe4c7e585a62cc22e5",
+          "git_status_at_remediation": "??"
+        }
+      ],
+      "verification": [
+        "TWTR economic dates and EDGAR acceptance observations retained; pre-open public availability explicitly UNKNOWN.",
+        "Related acceptance/eligibility language checked; human durations labeled retrospective estimates rather than instrumented timing."
+      ],
+      "concerns": [
+        "Six cases do not prove population coverage, full continuity, exact first-public instants or a production identity service."
+      ],
+      "readiness": "READY",
+      "publication_status": "COMMITTED"
+    },
+    {
+      "id": "R7",
+      "previous_group": "G8/publication manifest",
+      "purpose": "Record the current accepted free-first decision while preserving dated paid-data research and an exact publication/exclusion inventory.",
+      "message": "docs(research): align feasibility handoff with free-first decision",
+      "dependencies": [
+        "G1 (committed)",
+        "R1",
+        "R2",
+        "R3",
+        "R4",
+        "R5",
+        "R6"
+      ],
+      "files": [
+        {
+          "path": "docs/research/free-composite-market-data-synthesis-2026-10-09.md",
+          "git_status": "??",
+          "origin": "pre-existing untracked",
+          "changed_by_remediation": true,
+          "sha256": "f26d3573bd51dc3fcce1c6c678e50750bc9004f9e905775a7ad1ba29960d699e"
+        },
+        {
+          "path": "docs/research/free-first-research-publication-manifest-2026-10-15.json",
+          "git_status": "??",
+          "origin": "created by this remediation",
+          "changed_by_remediation": true,
+          "sha256": null,
+          "hash_note": "Explicit sole self-hash exclusion: sha256 is null for this exact manifest path. Verify every other publication and exclusion record over exact file bytes; do not replace null with a digest of an earlier manifest version."
+        }
+      ],
+      "verification": [
+        "Current decision links the accepted ADR; historical Strategy C recommendation remains explicitly historical.",
+        "Final cross-reference, file/hash, sensitivity, whitespace and complete working-tree partition checks performed."
+      ],
+      "concerns": [
+        "No paid authorization, #31 readiness change, methodology change or application implementation is implied.",
+        "Manifest records this audit snapshot; user may commit READY groups independently in dependency order."
+      ],
+      "readiness": "READY",
+      "publication_status": "PENDING"
+    }
+  ],
+  "excluded_groups": [
+    {
+      "id": "G5-original-bundle",
+      "readiness": "NOT READY",
+      "reason": "Original Stooq downloaded material and copied research/reference bundle. Retention/redistribution rights unresolved; report-only publication does not clear this bundle. All 32 original files remain unchanged and local only.",
+      "files": [
+        {
+          "path": "docs/research/experiments/stooq-2026-10-07/README.md",
+          "git_status": "??",
+          "sha256": "41bb103cb777e4c020322393bda5c5343e45acee21d8955a7d82312c98892ed9",
+          "unchanged": true
+        },
+        {
+          "path": "docs/research/experiments/stooq-2026-10-07/analyze.py",
+          "git_status": "??",
+          "sha256": "15321a606c3ea5e5735802e9593cde5b883b16dea5348d89a17bc1198a2caab4",
+          "unchanged": true
+        },
+        {
+          "path": "docs/research/experiments/stooq-2026-10-07/artifacts/aapl-browser-default-repeat.csv",
+          "git_status": "??",
+          "sha256": "8156bfb10d534f24df85114c7046c96da064a63aef526fb41dff3601bbfdbce4",
+          "unchanged": true
+        },
+        {
+          "path": "docs/research/experiments/stooq-2026-10-07/artifacts/aapl-browser-default.csv",
+          "git_status": "??",
+          "sha256": "8156bfb10d534f24df85114c7046c96da064a63aef526fb41dff3601bbfdbce4",
+          "unchanged": true
+        },
+        {
+          "path": "docs/research/experiments/stooq-2026-10-07/artifacts/aapl-browser-split-skip.csv",
+          "git_status": "??",
+          "sha256": "8156bfb10d534f24df85114c7046c96da064a63aef526fb41dff3601bbfdbce4",
+          "unchanged": true
+        },
+        {
+          "path": "docs/research/experiments/stooq-2026-10-07/artifacts/aapl-direct-repeat.body",
+          "git_status": "??",
+          "sha256": "b3dfbfcfda6a96b3393bbf78420b6cdc34050e644d0bcf123c345784d363d5b9",
+          "unchanged": true
+        },
+        {
+          "path": "docs/research/experiments/stooq-2026-10-07/artifacts/aapl-direct-repeat.headers",
+          "git_status": "??",
+          "sha256": "b60eff0e856921a3c22d7480f4423b95df4156895f42923352e9c2e8b48c03b3",
+          "unchanged": true
+        },
+        {
+          "path": "docs/research/experiments/stooq-2026-10-07/artifacts/aapl-direct.body",
+          "git_status": "??",
+          "sha256": "a7c82643c988ec26b420d7530bc5e7a7d681be31559107d484e4424ce5338171",
+          "unchanged": true
+        },
+        {
+          "path": "docs/research/experiments/stooq-2026-10-07/artifacts/aapl-direct.headers",
+          "git_status": "??",
+          "sha256": "4f0f7ed4eb70e9140c8d9ee79f55a3783264dc7ad9864237427fe2610df91b37",
+          "unchanged": true
+        },
+        {
+          "path": "docs/research/experiments/stooq-2026-10-07/artifacts/aapl-pl.body",
+          "git_status": "??",
+          "sha256": "a627a4b52d9f8e3fcc67ff127f147d4dc1c33c91188272e6a531be113e3f4063",
+          "unchanged": true
+        },
+        {
+          "path": "docs/research/experiments/stooq-2026-10-07/artifacts/aapl-pl.headers",
+          "git_status": "??",
+          "sha256": "b600157a4b8f6dcc9d83a18ddbac2be8e28447b80b0512c71ad028183d517a0e",
+          "unchanged": true
+        },
+        {
+          "path": "docs/research/experiments/stooq-2026-10-07/artifacts/fb-browser-split-dividend-skip.csv",
+          "git_status": "??",
+          "sha256": "61fea089c26e9af3e1871353fcb25e00da287d222a7febc3afe6713f684430d5",
+          "unchanged": true
+        },
+        {
+          "path": "docs/research/experiments/stooq-2026-10-07/artifacts/meta-browser-split-dividend-skip.csv",
+          "git_status": "??",
+          "sha256": "a423d694084ca63b64c96b0cc2872819a1a389ed20141b624eee8de2cf563cae",
+          "unchanged": true
+        },
+        {
+          "path": "docs/research/experiments/stooq-2026-10-07/artifacts/metv-browser-split-dividend-skip.csv",
+          "git_status": "??",
+          "sha256": "14833e664370ef7e07299b63dd537c0a338f062fcf7ffff3dd936aee7037f400",
+          "unchanged": true
+        },
+        {
+          "path": "docs/research/experiments/stooq-2026-10-07/artifacts/nvda-browser-split-dividend-skip.csv",
+          "git_status": "??",
+          "sha256": "b7ca440680002d30637fb95595de0606d754f71577a5e595e445f02711d7e6d5",
+          "unchanged": true
+        },
+        {
+          "path": "docs/research/experiments/stooq-2026-10-07/artifacts/nvda-window-default.csv",
+          "git_status": "??",
+          "sha256": "10d5e93233e700a95b395bacae69bcf8517434d4705f7adc0306358dea8d5653",
+          "unchanged": true
+        },
+        {
+          "path": "docs/research/experiments/stooq-2026-10-07/artifacts/nvda-window-split-dividend-skip.csv",
+          "git_status": "??",
+          "sha256": "f0686414e48367b4f26307ae1343e59d3a7071c1f69bc9236f17acabf9612952",
+          "unchanged": true
+        },
+        {
+          "path": "docs/research/experiments/stooq-2026-10-07/artifacts/spy-browser-split-dividend-skip.csv",
+          "git_status": "??",
+          "sha256": "7c22a8a0324dfa89e59d08fc3778386a2d83536376918e7179c3674ff76a1e3f",
+          "unchanged": true
+        },
+        {
+          "path": "docs/research/experiments/stooq-2026-10-07/artifacts/spy-browser-split-skip.csv",
+          "git_status": "??",
+          "sha256": "ad7c6911026596ed5b692482e8f0dbb238f942207de18927697ff7852e52bacc",
+          "unchanged": true
+        },
+        {
+          "path": "docs/research/experiments/stooq-2026-10-07/artifacts/spy-catch-up-default.csv",
+          "git_status": "??",
+          "sha256": "2a6216ba4577360afd7c9e15094ff4944002dd00910195e65a20285b82244db3",
+          "unchanged": true
+        },
+        {
+          "path": "docs/research/experiments/stooq-2026-10-07/browser-observations.json",
+          "git_status": "??",
+          "sha256": "360ad31a3f2c70fcf1833d2c4ae7a20562dadc6bdee58734c40aabb6fc359add",
+          "unchanged": true
+        },
+        {
+          "path": "docs/research/experiments/stooq-2026-10-07/free-market-data-provider-screen-2026-10-07.md",
+          "git_status": "??",
+          "sha256": "0bbbb8f22ab87cbc844b72572dc168f1e492680ce6fd57b10e9006a414a18377",
+          "unchanged": true
+        },
+        {
+          "path": "docs/research/experiments/stooq-2026-10-07/gate-classifications.json",
+          "git_status": "??",
+          "sha256": "6d3d380cfa2915b532477b2e0eca92cd3f7b8be2045c4d715e06129360e20b4e",
+          "unchanged": true
+        },
+        {
+          "path": "docs/research/experiments/stooq-2026-10-07/issue-26.json",
+          "git_status": "??",
+          "sha256": "dc5de81d37e4613adc308ede874fb4195d8f5284a35cf2acc7b9c49523481009",
+          "unchanged": true
+        },
+        {
+          "path": "docs/research/experiments/stooq-2026-10-07/issue-31.json",
+          "git_status": "??",
+          "sha256": "cbfe4bd6777000bedb109808abe777bd64884c627713149cfbcc833ac2c4c979",
+          "unchanged": true
+        },
+        {
+          "path": "docs/research/experiments/stooq-2026-10-07/manifest.json",
+          "git_status": "??",
+          "sha256": "3039c2c4e93494c29dc70cf98d38a5e330ec277507e56b626f12b814969bf602",
+          "unchanged": true
+        },
+        {
+          "path": "docs/research/experiments/stooq-2026-10-07/market-data-conformance.md",
+          "git_status": "??",
+          "sha256": "f076b07a1519c034de50f8d5ed36e9f22b3512b6ae0f5bbbde89b05e8180a9e6",
+          "unchanged": true
+        },
+        {
+          "path": "docs/research/experiments/stooq-2026-10-07/observations.json",
+          "git_status": "??",
+          "sha256": "77567db5ac848bfc7ee50ec7ee36fb298e588cef4e910be71d50207f0e88d633",
+          "unchanged": true
+        },
+        {
+          "path": "docs/research/experiments/stooq-2026-10-07/signal-v2.md",
+          "git_status": "??",
+          "sha256": "302f8ee62f9071f0a5de9fb1bc680365ebcc0134b094f283096e64bf137494e7",
+          "unchanged": true
+        },
+        {
+          "path": "docs/research/experiments/stooq-2026-10-07/stooq-event-source-check-2026-10-07.md",
+          "git_status": "??",
+          "sha256": "09b8da91242851da6e480c94f7cefde9b0660a498df87eb10039ff36fa2ff9b1",
+          "unchanged": true
+        },
+        {
+          "path": "docs/research/experiments/stooq-2026-10-07/verification.json",
+          "git_status": "??",
+          "sha256": "adb6bc859c405e61228c73ee1d26027bfa3510f4547ee36cbe42dd2da90f7636",
+          "unchanged": true
+        },
+        {
+          "path": "docs/research/experiments/stooq-2026-10-07/verify.py",
+          "git_status": "??",
+          "sha256": "1c5a74356e1f40ea4de38c874f7e8339b27467aaf614e07505b5a2266280a74d",
+          "unchanged": true
+        }
+      ]
+    },
+    {
+      "id": "G6-original-bundle",
+      "readiness": "NOT READY",
+      "reason": "Original Twelve Data response bodies, copied documentation, transport metadata and experiment bundle. Retention/redistribution rights unresolved. All 55 original files remain unchanged and local only; even independently authored bundled scripts are excluded from this publication plan.",
+      "files": [
+        {
+          "path": "docs/research/experiments/twelve-data-2026-10-08/README.md",
+          "git_status": "??",
+          "sha256": "836cdd5dff02fc8bd4b691bf34f957a72004836ae2b9cfd3bfcb44bad8949a85",
+          "unchanged": true
+        },
+        {
+          "path": "docs/research/experiments/twelve-data-2026-10-08/aapl-2021-repeat.body",
+          "git_status": "??",
+          "sha256": "0ed88ab5343edc3c08e0f88b73e2b9e447b0a6d3006cae1f651685405ea9fd8d",
+          "unchanged": true
+        },
+        {
+          "path": "docs/research/experiments/twelve-data-2026-10-08/aapl-2021-repeat.headers",
+          "git_status": "??",
+          "sha256": "880af4d7d15cbf5d95ee66b0123a9559056a6c5b04e5a9ca598b24bc7b463cbb",
+          "unchanged": true
+        },
+        {
+          "path": "docs/research/experiments/twelve-data-2026-10-08/aapl-2021.body",
+          "git_status": "??",
+          "sha256": "0ed88ab5343edc3c08e0f88b73e2b9e447b0a6d3006cae1f651685405ea9fd8d",
+          "unchanged": true
+        },
+        {
+          "path": "docs/research/experiments/twelve-data-2026-10-08/aapl-2021.headers",
+          "git_status": "??",
+          "sha256": "faabacc4e01019f228116a3f3e3c56d7267056f159cab473d88d2e70c26ac4a5",
+          "unchanged": true
+        },
+        {
+          "path": "docs/research/experiments/twelve-data-2026-10-08/dividends.headers",
+          "git_status": "??",
+          "sha256": "24710e8a4b8559c3da7590d650371c441ce82c88611fdf159b35ac235b4c0a57",
+          "unchanged": true
+        },
+        {
+          "path": "docs/research/experiments/twelve-data-2026-10-08/dividends.md",
+          "git_status": "??",
+          "sha256": "c2bbc24590eee643734ab5623c86c10a9dacce10e4baddc7af4d93d26e89088e",
+          "unchanged": true
+        },
+        {
+          "path": "docs/research/experiments/twelve-data-2026-10-08/earliest-timestamp.headers",
+          "git_status": "??",
+          "sha256": "886edea28d01040df827f46d344dd8ffa6aba9e2599fa2c62c22fc93e5d418d1",
+          "unchanged": true
+        },
+        {
+          "path": "docs/research/experiments/twelve-data-2026-10-08/earliest-timestamp.md",
+          "git_status": "??",
+          "sha256": "fce86e0107326bd4ac4bf1d34389c2b128f86363285463c66243c7341b02fd49",
+          "unchanged": true
+        },
+        {
+          "path": "docs/research/experiments/twelve-data-2026-10-08/eod-guide.headers",
+          "git_status": "??",
+          "sha256": "43398f772335588eb02fa76271133ef04989e6f6c3248a4a44cc5e9b77bc6178",
+          "unchanged": true
+        },
+        {
+          "path": "docs/research/experiments/twelve-data-2026-10-08/eod-guide.html",
+          "git_status": "??",
+          "sha256": "f3aeffae7b3ad191b43f71a7ddc1baa2a2dd570a09167f351ecdd72c6d7b1c72",
+          "unchanged": true
+        },
+        {
+          "path": "docs/research/experiments/twelve-data-2026-10-08/exchange-schedule.headers",
+          "git_status": "??",
+          "sha256": "69d354b8dfcb155f352f0de219717c4a6434a41d8941f1b40d2b58059a008e73",
+          "unchanged": true
+        },
+        {
+          "path": "docs/research/experiments/twelve-data-2026-10-08/exchange-schedule.md",
+          "git_status": "??",
+          "sha256": "b8936e413fa175871fa5a18c89796dcaf44b5f282c132771014f7cf3eeb9bdf1",
+          "unchanged": true
+        },
+        {
+          "path": "docs/research/experiments/twelve-data-2026-10-08/fb-rename.body",
+          "git_status": "??",
+          "sha256": "4d36d046de6d6de9487fb9a9bb6883902ac08ddb904923c7e51d37430fffca5e",
+          "unchanged": true
+        },
+        {
+          "path": "docs/research/experiments/twelve-data-2026-10-08/fb-rename.headers",
+          "git_status": "??",
+          "sha256": "bf9d133eb505e593b1b0869500a0d46e259a5ab745c4b14be9559f043a9166a3",
+          "unchanged": true
+        },
+        {
+          "path": "docs/research/experiments/twelve-data-2026-10-08/fundamentals.headers",
+          "git_status": "??",
+          "sha256": "612dd848cbffe7ceaa8f956c2c1d0a3a9f5bd654c515e200efb95e112d40b2ed",
+          "unchanged": true
+        },
+        {
+          "path": "docs/research/experiments/twelve-data-2026-10-08/fundamentals.md",
+          "git_status": "??",
+          "sha256": "493bccce9e1a09e5b44a225a649e429bd98a6fde2244d3c21ce549fb3249111c",
+          "unchanged": true
+        },
+        {
+          "path": "docs/research/experiments/twelve-data-2026-10-08/introduction.headers",
+          "git_status": "??",
+          "sha256": "531dc361efe848257a4a16ad193697bff01a4a66b4e6fc39ccccb4871009f6bf",
+          "unchanged": true
+        },
+        {
+          "path": "docs/research/experiments/twelve-data-2026-10-08/introduction.md",
+          "git_status": "??",
+          "sha256": "616d4858c1876a08accbf6e35872c74ba8690879af2a1323ba3e39f92becaeaa",
+          "unchanged": true
+        },
+        {
+          "path": "docs/research/experiments/twelve-data-2026-10-08/issue-26.json",
+          "git_status": "??",
+          "sha256": "921692bc86c4a3eb82a5f65a9951bd32b1d88dd54b93968f30327140ee4b47a1",
+          "unchanged": true
+        },
+        {
+          "path": "docs/research/experiments/twelve-data-2026-10-08/issue-31.json",
+          "git_status": "??",
+          "sha256": "ff51d3cbe6fedce945cbde76cd60bba2870cba988d7a83e4a83958bc5b30da7a",
+          "unchanged": true
+        },
+        {
+          "path": "docs/research/experiments/twelve-data-2026-10-08/last-changes.headers",
+          "git_status": "??",
+          "sha256": "acc6af0565643fc390e617f78c55cce60b0d6330894d62b5279d03a41e45726a",
+          "unchanged": true
+        },
+        {
+          "path": "docs/research/experiments/twelve-data-2026-10-08/last-changes.md",
+          "git_status": "??",
+          "sha256": "5b6f9a4a9c0cfb6f4e24b277d03d899d24cf187179a1e6c2c5276515cc3ed0c4",
+          "unchanged": true
+        },
+        {
+          "path": "docs/research/experiments/twelve-data-2026-10-08/manifest.json",
+          "git_status": "??",
+          "sha256": "052ec30b630446b41489e336d0c3d257e3935dbb89f1c0157e2934d05681db0a",
+          "unchanged": true
+        },
+        {
+          "path": "docs/research/experiments/twelve-data-2026-10-08/market-data.headers",
+          "git_status": "??",
+          "sha256": "00684de2b60bcc75ef9ac34c97b65fee8ab52016628c790e11cddd521f3ca9ce",
+          "unchanged": true
+        },
+        {
+          "path": "docs/research/experiments/twelve-data-2026-10-08/market-data.md",
+          "git_status": "??",
+          "sha256": "9c293fb93fa8451f5c95b8fcfd5087c3582dbc9dfcfe22d41849854463932dc2",
+          "unchanged": true
+        },
+        {
+          "path": "docs/research/experiments/twelve-data-2026-10-08/meta-rename.body",
+          "git_status": "??",
+          "sha256": "4d36d046de6d6de9487fb9a9bb6883902ac08ddb904923c7e51d37430fffca5e",
+          "unchanged": true
+        },
+        {
+          "path": "docs/research/experiments/twelve-data-2026-10-08/meta-rename.headers",
+          "git_status": "??",
+          "sha256": "9b036fd0011636869f1b47c673e656320f1dd7473aac64d4d7a54f5a482ebcb0",
+          "unchanged": true
+        },
+        {
+          "path": "docs/research/experiments/twelve-data-2026-10-08/nvda-raw-split.body",
+          "git_status": "??",
+          "sha256": "4d36d046de6d6de9487fb9a9bb6883902ac08ddb904923c7e51d37430fffca5e",
+          "unchanged": true
+        },
+        {
+          "path": "docs/research/experiments/twelve-data-2026-10-08/nvda-raw-split.headers",
+          "git_status": "??",
+          "sha256": "cac862429ca003e893993afa42e87669c4d5312975125711664df3caff2ebaf9",
+          "unchanged": true
+        },
+        {
+          "path": "docs/research/experiments/twelve-data-2026-10-08/nvda-split-adjusted.body",
+          "git_status": "??",
+          "sha256": "4d36d046de6d6de9487fb9a9bb6883902ac08ddb904923c7e51d37430fffca5e",
+          "unchanged": true
+        },
+        {
+          "path": "docs/research/experiments/twelve-data-2026-10-08/nvda-split-adjusted.headers",
+          "git_status": "??",
+          "sha256": "17e1a9854a3cd377cf2f402c1ca46ae3321bd15d6ec441341a763471df8e0a0a",
+          "unchanged": true
+        },
+        {
+          "path": "docs/research/experiments/twelve-data-2026-10-08/pricing.headers",
+          "git_status": "??",
+          "sha256": "c39e30df1ec3a6c172da9a873897d56aa6b6ad8b34dc24641becbef64978f217",
+          "unchanged": true
+        },
+        {
+          "path": "docs/research/experiments/twelve-data-2026-10-08/pricing.md",
+          "git_status": "??",
+          "sha256": "7bb05e09eb5575f76cf5ed4a81a5a32780614c00d0fcd6ba53a39612ca8eca6f",
+          "unchanged": true
+        },
+        {
+          "path": "docs/research/experiments/twelve-data-2026-10-08/probe-observations.json",
+          "git_status": "??",
+          "sha256": "823cb6c2708646e408cb3e90bfb89bc95a52cb7aa514cde3cc5ef787066b584c",
+          "unchanged": true
+        },
+        {
+          "path": "docs/research/experiments/twelve-data-2026-10-08/probe.py",
+          "git_status": "??",
+          "sha256": "6922acda2c9d5306a69d404ca933d323067931a5628ade795f7329855b337ecc",
+          "unchanged": true
+        },
+        {
+          "path": "docs/research/experiments/twelve-data-2026-10-08/python-tls-attempts.json",
+          "git_status": "??",
+          "sha256": "0c8dc367ccbf608c8e62c31aafa439e22cab77eae031137f19facb46e454c07f",
+          "unchanged": true
+        },
+        {
+          "path": "docs/research/experiments/twelve-data-2026-10-08/reference-data.headers",
+          "git_status": "??",
+          "sha256": "169108ce91fd29f15acbe2cd524b743e2ee19bde19af136481afe150ff1e3b2e",
+          "unchanged": true
+        },
+        {
+          "path": "docs/research/experiments/twelve-data-2026-10-08/reference-data.md",
+          "git_status": "??",
+          "sha256": "fc0bb774cb1ba079733dcaa249e6976bacdd571659936a756300429e81cd663e",
+          "unchanged": true
+        },
+        {
+          "path": "docs/research/experiments/twelve-data-2026-10-08/splits.headers",
+          "git_status": "??",
+          "sha256": "93f9d540035cb56ea72793416ca567fc11e34fbd54b3821abf600844f3e9bf8b",
+          "unchanged": true
+        },
+        {
+          "path": "docs/research/experiments/twelve-data-2026-10-08/splits.md",
+          "git_status": "??",
+          "sha256": "1afefb8aeb5613845a2c64bc51f6af235e3e705b010b4e241a3d71282f8e5bfe",
+          "unchanged": true
+        },
+        {
+          "path": "docs/research/experiments/twelve-data-2026-10-08/spy-2021.body",
+          "git_status": "??",
+          "sha256": "4d36d046de6d6de9487fb9a9bb6883902ac08ddb904923c7e51d37430fffca5e",
+          "unchanged": true
+        },
+        {
+          "path": "docs/research/experiments/twelve-data-2026-10-08/spy-2021.headers",
+          "git_status": "??",
+          "sha256": "79d6f9b69cfbcbefee3b25024a007bf2a78afe24f24ec98b3e03b8fa4d3fa33c",
+          "unchanged": true
+        },
+        {
+          "path": "docs/research/experiments/twelve-data-2026-10-08/stocks.headers",
+          "git_status": "??",
+          "sha256": "6f3e335f685e63484b73cc50d4f99b0ac93d0b0c0d16e91d675c437ae01720b7",
+          "unchanged": true
+        },
+        {
+          "path": "docs/research/experiments/twelve-data-2026-10-08/stocks.md",
+          "git_status": "??",
+          "sha256": "b44a15409c7eb56d821229524d4184a47edab737e496994c1c820e5b44b1b75f",
+          "unchanged": true
+        },
+        {
+          "path": "docs/research/experiments/twelve-data-2026-10-08/terms.headers",
+          "git_status": "??",
+          "sha256": "95c52d200476df33d387af4307f642a283ccfe121c3ef1414d67dbfb716bee34",
+          "unchanged": true
+        },
+        {
+          "path": "docs/research/experiments/twelve-data-2026-10-08/terms.html",
+          "git_status": "??",
+          "sha256": "54bc7f0fb541ac1c5cb257a5936516683d8ad42e5586588e79b09e2c6c981247",
+          "unchanged": true
+        },
+        {
+          "path": "docs/research/experiments/twelve-data-2026-10-08/time-series.headers",
+          "git_status": "??",
+          "sha256": "ffa5b4d30e49e2150298768132bc3d42215c2c9b9edde135e572587fe430e36e",
+          "unchanged": true
+        },
+        {
+          "path": "docs/research/experiments/twelve-data-2026-10-08/time-series.md",
+          "git_status": "??",
+          "sha256": "fa940cf49fd058384c36d71802e9efc45371919b57dd52fe073e907eda4a0c69",
+          "unchanged": true
+        },
+        {
+          "path": "docs/research/experiments/twelve-data-2026-10-08/twtr-terminal.body",
+          "git_status": "??",
+          "sha256": "4d36d046de6d6de9487fb9a9bb6883902ac08ddb904923c7e51d37430fffca5e",
+          "unchanged": true
+        },
+        {
+          "path": "docs/research/experiments/twelve-data-2026-10-08/twtr-terminal.headers",
+          "git_status": "??",
+          "sha256": "c787d1ee2cfbe27e9825d53a1866527b950ced0b5aa7901f1fbc9bab8d749021",
+          "unchanged": true
+        },
+        {
+          "path": "docs/research/experiments/twelve-data-2026-10-08/us-equities.headers",
+          "git_status": "??",
+          "sha256": "2166ea531430884d262249ef6880eaf5a82deaed9cac254462651e3571f58487",
+          "unchanged": true
+        },
+        {
+          "path": "docs/research/experiments/twelve-data-2026-10-08/us-equities.html",
+          "git_status": "??",
+          "sha256": "0a36002e801c0751d144a7c5f3883805d6d986899fcce6c86fe7bc07bd4d21e3",
+          "unchanged": true
+        },
+        {
+          "path": "docs/research/experiments/twelve-data-2026-10-08/verification.json",
+          "git_status": "??",
+          "sha256": "6f308efc6dab8935cac2f912e9c413eb4863c87f3649af19dbe422b3bae4f25c",
+          "unchanged": true
+        },
+        {
+          "path": "docs/research/experiments/twelve-data-2026-10-08/verify.py",
+          "git_status": "??",
+          "sha256": "cd3fda8559773e2862a53efec8b828a2d27917eb83e857d6dfe9a475ccff4f1f",
+          "unchanged": true
+        }
+      ]
+    },
+    {
+      "id": "G4-original-transfer",
+      "readiness": "NOT READY",
+      "reason": "Original curl transfer metadata contains local/private network and certificate/runtime metadata unnecessary for publication. Original preserved unchanged and local only; publish only the explicitly labeled allowlist derivative.",
+      "files": [
+        {
+          "path": "docs/research/artifacts/openfigi-meta-metv-2026-10-09/transfer.json",
+          "git_status": "??",
+          "sha256": "5206209adaa988496b1bd307cd57f12bf70415cda7e06c6bb1ad54ed0040cfd0",
+          "unchanged": true
+        }
+      ]
+    }
+  ],
+  "conclusion": "R1-R7 are READY in dependency order. Excluded material need not be committed before moving to the bounded House disclosure workflow. Rights clearance is necessary only if later proposing publication of the excluded provider bundles. #31 remains unavailable.",
+  "remediation_snapshot": {
+    "recorded_on": "2026-10-15",
+    "counts": {
+      "baseline_untracked": 109,
+      "preexisting_untracked_modified": 12,
+      "new_audit_files": 6,
+      "final_untracked": 115,
+      "ready": 27,
+      "excluded_and_locally_held": 88,
+      "tracked_modified": 0,
+      "staged": 0,
+      "ready_after_fixes": 0
+    },
+    "status_note": "All listed files are untracked (??) at the recorded snapshot. READY applies to complete individual files in dependency order; do not include unlisted sibling artifacts. No partial-file staging is required.",
+    "verification_scope": [
+      "All 26 other publication files inspected; manifest generated from the observed inventory, then JSON parsing, hashes and complete partition checked.",
+      "Publication-local Markdown targets and anchors resolve to the same/earlier groups or already tracked files; no links into excluded experiment bundles.",
+      "Published text scanned for credentials/private keys/cookies/IP addresses, whitespace/conflict markers; JSON parsed and Python syntax checked.",
+      "All 240 initially tracked files and all 88 excluded originals match the pre-remediation SHA-256 snapshot.",
+      "Offline research checks only. Application tests/build/typecheck/lint not rerun: no application files changed. No provider acquisition requests performed by the local verification scripts."
+    ]
+  },
+  "verified_on": "2026-10-16",
+  "verification_head": "d6df1449b41895a755d883956a37f1ddd25c3bff",
+  "verification_head_note": "Observed HEAD before the user commits R7; baseline_head remains the original pre-R1 remediation baseline. Neither field claims to identify the future R7 commit.",
+  "hash_convention": {
+    "algorithm": "SHA-256",
+    "input": "Exact file bytes, with no whitespace or JSON normalization.",
+    "self_hash_exclusion": "docs/research/free-first-research-publication-manifest-2026-10-15.json",
+    "self_hash_value": null,
+    "verification_rule": "Collect all files in groups and excluded_groups. Require exactly one null sha256, belonging to self_hash_exclusion. Skip that one record only; every other record must equal hashlib.sha256(Path(record[\"path\"]).read_bytes()).hexdigest(). The manifest has no claimed final-file self digest."
+  }
+}
