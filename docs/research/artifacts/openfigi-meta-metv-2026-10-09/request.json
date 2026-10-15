@@ -1,0 +1,4 @@
+[
+  {"idType":"TICKER","idValue":"META","exchCode":"US","includeUnlistedEquities":true},
+  {"idType":"TICKER","idValue":"METV","exchCode":"US","includeUnlistedEquities":true}
+]

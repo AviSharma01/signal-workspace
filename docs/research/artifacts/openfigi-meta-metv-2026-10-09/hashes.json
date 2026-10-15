@@ -1,0 +1,28 @@
+{
+  "request.json": {
+    "sha256": "21513c8d577088fb1d007159b4c9f85fbf760287110eb19f67035033939f54ed",
+    "bytes": 177
+  },
+  "response.json": {
+    "sha256": "4a526f649ec4f14dcd1049ed521f1262a302ebc0f3482a612a4e3fd0fa4bad68",
+    "bytes": 553
+  },
+  "response.headers": {
+    "sha256": "4a16558149a2e442a0b8de6e6ab5f16c001f5d3fdca12ee719867aae0fbc59fa",
+    "bytes": 1118
+  },
+  "retrieval-started-utc.txt": {
+    "sha256": "8ef734bb2a73b20c1eac784c79965dd3757aa6d03da4369551f21661e2286ba3",
+    "bytes": 21
+  },
+  "retrieval-completed-utc.txt": {
+    "sha256": "ce20bd5443af48f52d99805591c8e6e969b64a93634235708b0501404c15fd6c",
+    "bytes": 21
+  },
+  "transfer.sanitized.json": {
+    "sha256": "ea061461f112b1c5eff78ad7fdecfd9d35e24ca58a9a4a000f97b5f08881d0c0",
+    "bytes": 2032,
+    "artifact_kind": "sanitized_derivative",
+    "source_original_sha256": "5206209adaa988496b1bd307cd57f12bf70415cda7e06c6bb1ad54ed0040cfd0"
+  }
+}
