@@ -24,6 +24,10 @@ from house_ptr import METHOD as PTR_METHOD, VERSION as PTR_VERSION, extract_ptr,
 ConnectionFactory = Callable[[], ContextManager[sqlite3.Connection]]
 
 
+class ArtifactIntegrityError(ValueError):
+    """Retained bytes no longer match their immutable content identity."""
+
+
 @dataclass(frozen=True)
 class RetrievedArtifact:
     population: str
@@ -155,26 +159,9 @@ class DisclosureApplication:
             artifact_kind="original_filing",
         )
         if retrieval.availability_status == "available":
-            with self._connection_factory() as conn:
-                filing_record_id, _ = self._ensure_source_filing_with_connection(
-                    conn,
-                    population=retrieval.population,
-                    source_name="house-clerk",
-                    source_filing_id=document_id,
-                    chamber="house",
-                    source_url=retrieval.source_url,
-                    discovered_at_ms=retrieval.retrieved_at_ms,
-                    raw_metadata={"DocID": document_id, "Year": str(report_year)},
-                )
-                conn.execute(
-                    """
-                    UPDATE disclosure_artifacts SET source_filing_record_id = ? WHERE id = ?
-                    """,
-                    (filing_record_id, recorded["artifactId"]),
-                )
-            recorded.update(self._process_house_ptr(
+            recorded.update(self.resume_house_filing(
                 recorded["artifactVersionId"], population=retrieval.population,
-                extracted_at_ms=int(time.time() * 1000),
+                report_year=report_year, document_id=document_id,
             ))
             return recorded
         parse_status = (
@@ -189,12 +176,50 @@ class DisclosureApplication:
         )
         return recorded
 
+    @staticmethod
+    def verify_retained_content(content: bytes, sha256: str, length: int) -> None:
+        if len(content) != length or hashlib.sha256(content).hexdigest() != sha256:
+            raise ArtifactIntegrityError("Retained artifact integrity failed")
+
+    def resume_house_filing(
+        self, version_id: str, *, population: str, report_year: int, document_id: str,
+    ) -> dict[str, Any]:
+        """Repair filing linkage and resume committed evidence, without a retrieval."""
+        source_url = house_filing_url(report_year, document_id)
+        with self._connection_factory() as conn:
+            conn.execute("BEGIN IMMEDIATE")
+            version = conn.execute(
+                """SELECT v.*, a.id AS artifact_id, a.source_filing_record_id,
+                          MIN(o.observed_at) AS first_retrieval
+                   FROM disclosure_artifact_versions v
+                   JOIN disclosure_artifacts a ON a.id = v.artifact_id
+                   JOIN disclosure_retrieval_observations o ON o.artifact_version_id = v.id
+                   WHERE v.id = ? AND a.population = ? AND a.source_name = 'house-clerk'
+                     AND a.source_authority = 'official' AND a.artifact_kind = 'original_filing'
+                     AND a.source_url = ? AND o.availability_status = 'available'
+                   GROUP BY v.id""", (version_id, population, source_url),
+            ).fetchone()
+            if version is None:
+                raise KeyError(version_id)
+            self.verify_retained_content(bytes(version["raw_content"]), version["content_sha256"], version["content_length"])
+            filing_id, _ = self._ensure_source_filing_with_connection(
+                conn, population=population, source_name="house-clerk",
+                source_filing_id=document_id, chamber="house", source_url=source_url,
+                discovered_at_ms=version["first_retrieval"],
+                raw_metadata={"DocID": document_id, "Year": str(report_year)},
+            )
+            if version["source_filing_record_id"] not in {None, filing_id}:
+                raise ValueError("Retained filing linkage conflicts with its source locator")
+            conn.execute("UPDATE disclosure_artifacts SET source_filing_record_id = ? WHERE id = ?",
+                         (filing_id, version["artifact_id"]))
+        return self._process_house_ptr(version_id, population=population, extracted_at_ms=int(time.time() * 1000))
+
     def _process_house_ptr(
         self, version_id: str, *, population: str, extracted_at_ms: int,
     ) -> dict[str, Any]:
         with self._connection_factory() as conn:
             version = conn.execute(
-                """SELECT v.raw_content, a.source_filing_record_id
+                """SELECT v.raw_content, v.content_sha256, v.content_length, a.source_filing_record_id
                    FROM disclosure_artifact_versions v
                    JOIN disclosure_artifacts a ON a.id = v.artifact_id
                    WHERE v.id = ? AND a.population = ? AND a.source_name = 'house-clerk'
@@ -203,6 +228,7 @@ class DisclosureApplication:
             ).fetchone()
             if version is None:
                 raise KeyError(version_id)
+            self.verify_retained_content(bytes(version["raw_content"]), version["content_sha256"], version["content_length"])
             successful_observation = conn.execute(
                 """SELECT id FROM disclosure_retrieval_observations
                    WHERE artifact_version_id = ? AND availability_status = 'available'
@@ -223,20 +249,29 @@ class DisclosureApplication:
             # Commit the entire extracted representation before row materialization
             # or normalization. A retry can resume from this durable representation.
             with self._connection_factory() as conn:
+                conn.execute("BEGIN IMMEDIATE")
                 conn.execute(
                     """INSERT INTO disclosure_extractions
                        (id, artifact_version_id, method, method_version, extracted_at,
-                        status, representation_json, error) VALUES (?, ?, ?, ?, ?, ?, ?, ?)""",
+                        status, representation_json, error) VALUES (?, ?, ?, ?, ?, ?, ?, ?)
+                       ON CONFLICT (artifact_version_id, method, method_version) DO NOTHING""",
                     (extraction_id, version_id, PTR_METHOD, PTR_VERSION, extracted_at_ms,
                      parse_status, json.dumps(representation, separators=(",", ":")),
                      "; ".join(representation["issues"]) or None),
                 )
-        else:
-            extraction_id = extraction["id"]
-            representation = json.loads(extraction["representation_json"])
-            parse_status = extraction["status"]
+                # Another attempt may have completed extraction while this one
+                # parsed outside the write transaction. Reuse its committed result.
+                extraction = conn.execute(
+                    """SELECT id, status, representation_json FROM disclosure_extractions
+                       WHERE artifact_version_id = ? AND method = ? AND method_version = ?""",
+                    (version_id, PTR_METHOD, PTR_VERSION),
+                ).fetchone()
+        extraction_id = extraction["id"]
+        representation = json.loads(extraction["representation_json"])
+        parse_status = extraction["status"]
         created = 0
         with self._connection_factory() as conn:
+            conn.execute("BEGIN IMMEDIATE")
             self._link_source_filing_evidence(
                 conn, filing_record_id=version["source_filing_record_id"],
                 artifact_version_id=version_id, extraction_id=extraction_id,
@@ -262,6 +297,7 @@ class DisclosureApplication:
                 created += 1
         # Literal extracted rows are also durable before normalization is attempted.
         with self._connection_factory() as conn:
+            conn.execute("BEGIN IMMEDIATE")
             rows = conn.execute(
                 "SELECT id, raw_fields_json FROM disclosure_row_occurrences WHERE artifact_version_id = ? ORDER BY ordinal",
                 (version_id,),
@@ -312,6 +348,8 @@ class DisclosureApplication:
             else None
         )
         with self._connection_factory() as conn:
+            if artifact_kind == "original_filing":
+                conn.execute("BEGIN IMMEDIATE")
             artifact = conn.execute(
                 """
                 SELECT id FROM disclosure_artifacts
@@ -363,7 +401,7 @@ class DisclosureApplication:
             else:
                 version = conn.execute(
                     """
-                    SELECT id FROM disclosure_artifact_versions
+                    SELECT id, raw_content, content_length FROM disclosure_artifact_versions
                     WHERE artifact_id = ? AND content_sha256 = ?
                     """,
                     (artifact_id, content_hash),
@@ -390,6 +428,8 @@ class DisclosureApplication:
                     )
                 else:
                     version_id = version["id"]
+                    if artifact_kind == "original_filing":
+                        self.verify_retained_content(bytes(version["raw_content"]), content_hash, version["content_length"])
 
             observation_id = str(uuid.uuid4())
             conn.execute(
@@ -962,6 +1002,9 @@ class DisclosureApplication:
 
     def query_evidence(self, *, population: str) -> dict[str, Any]:
         with self._connection_factory() as conn:
+            # Lifecycle derivation may already supply its enclosing transaction.
+            if not conn.in_transaction:
+                conn.execute("BEGIN")
             source_filing_rows = conn.execute(
                 """
                 SELECT id, source_name, source_filing_id, chamber, source_url,
@@ -1102,6 +1145,7 @@ class DisclosureApplication:
                         "sourceName": artifact["source_name"],
                         "sourceAuthority": artifact["source_authority"],
                         "artifactKind": artifact["artifact_kind"],
+                        "sourceFilingRecordId": artifact["source_filing_record_id"],
                         "sourceUrl": artifact["source_url"],
                         "mediaType": artifact["media_type"],
                         "versions": versions,

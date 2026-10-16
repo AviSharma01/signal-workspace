@@ -34,6 +34,12 @@ export interface DisclosureArtifactVersion {
     extractedAt: number
     status: string
     error: string | null
+    representation?: {
+      engine: string | null
+      pages: Array<{ page: number; status: string }>
+      issues: string[]
+      unresolvedFragments: unknown[]
+    } | null
   }>
   rowOccurrences: DisclosureRowOccurrence[]
 }

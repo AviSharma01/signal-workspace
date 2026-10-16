@@ -4,6 +4,7 @@ import base64
 import binascii
 import hashlib
 import re
+import sqlite3
 import time
 from pathlib import Path
 from typing import Literal
@@ -15,7 +16,8 @@ from pydantic import BaseModel, ConfigDict, Field, field_validator
 from capabilities import CapabilityApplication, result_state
 from db.database import get_connection
 from disclosure_sources import HouseDisclosureSource, house_filing_url, house_index_url
-from disclosures import DisclosureApplication, RetrievedArtifact
+from disclosures import ArtifactIntegrityError, DisclosureApplication, RetrievedArtifact
+import offline_house
 from routers.capabilities import capability_json, get_capability_application
 
 
@@ -101,6 +103,51 @@ def _offline_evidence(application: DisclosureApplication) -> dict:
                   for row in version["rowOccurrences"] if row["sourceFiling"]}
     return {"population": "test", "artifacts": artifacts,
             "sourceFilings": [filing for filing in evidence["sourceFilings"] if filing["id"] in filing_ids]}
+
+
+def _offline_result(operation):
+    try:
+        return operation()
+    except offline_house.CorpusError as exc:
+        raise HTTPException(status_code=exc.status_code, detail=exc.detail) from exc
+    except ArtifactIntegrityError as exc:
+        raise HTTPException(status_code=409, detail={"reasonCode": "offline_integrity_failed",
+                            "message": "Retained sample integrity failed. Processing was blocked.", "retryable": False}) from exc
+    except sqlite3.DatabaseError as exc:
+        retryable = isinstance(exc, sqlite3.OperationalError) and any(word in str(exc).lower() for word in ("locked", "busy"))
+        raise HTTPException(status_code=503, detail={"reasonCode": "offline_database_busy" if retryable else "offline_database_error",
+                            "message": "Offline storage is busy; reload status and retry." if retryable else "Offline storage could not be processed. Preserve the database for inspection.",
+                            "retryable": retryable}) from exc
+    except ValueError as exc:
+        raise HTTPException(status_code=409, detail={"reasonCode": "offline_processing_conflict",
+                            "message": "Retained processing records conflict. Preserve the database for inspection.", "retryable": False}) from exc
+
+
+@router.get("/offline-corpus")
+def read_offline_corpus(application: DisclosureApplication = Depends(get_disclosure_application)) -> dict:
+    return _offline_result(lambda: offline_house.read_corpus(application))
+
+
+@router.post("/offline-corpus/{entry_key}/observations", status_code=status.HTTP_201_CREATED)
+def inspect_offline_entry(entry_key: str, command: OfflineSampleCommand,
+                          application: DisclosureApplication = Depends(get_disclosure_application)) -> dict:
+    return _offline_result(lambda: offline_house.observe(offline_house.entry_for(entry_key), application))
+
+
+@router.post("/offline-corpus/{entry_key}/resume")
+def resume_offline_entry(entry_key: str, command: OfflineSampleCommand,
+                         application: DisclosureApplication = Depends(get_disclosure_application)) -> dict:
+    return _offline_result(lambda: offline_house.resume(offline_house.entry_for(entry_key), application))
+
+
+@router.get("/offline-corpus/artifacts/{artifact_id}/versions/{version_id}/content")
+def download_offline_entry(artifact_id: str, version_id: str,
+                           application: DisclosureApplication = Depends(get_disclosure_application)) -> Response:
+    content, filename = _offline_result(lambda: offline_house.retained_content(artifact_id, version_id, application))
+    return Response(content=content, media_type="application/pdf", headers={
+        "Content-Disposition": f'attachment; filename="{filename}"',
+        "X-Content-Type-Options": "nosniff", "Cache-Control": "no-store",
+    })
 
 
 @router.get("/offline-sample")

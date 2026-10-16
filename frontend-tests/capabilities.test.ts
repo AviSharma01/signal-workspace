@@ -11,7 +11,7 @@ import AnalysisResults from '../src/detail/AnalysisResults.js'
 import CohortResults from '../src/detail/CohortResults.js'
 import type { AnalysisResponse, CohortResponse } from '../src/data/analysisTypes.js'
 import HouseFilingEvidence from '../src/detail/HouseFilingEvidence.js'
-import type { OfflineHouseSample } from '../src/data/houseFiling.js'
+import type { OfflineHouseEntry, OfflineHouseSample } from '../src/data/houseFiling.js'
 import {
   capabilityActionDisabled,
   capabilityPresentation,
@@ -62,6 +62,138 @@ test('offline House inspection exposes pending and failed actions', () => {
   assert.match(markup, /Loading sample/)
   assert.match(markup, /role="alert"/)
   assert.match(markup, /Sample integrity failed/)
+})
+
+test('corpus declarations remain unimported and expose no resume or successful extraction', () => {
+  const entry: OfflineHouseEntry = {
+    key: '2018-9113416',
+    reportYear: 2018,
+    documentId: '9113416',
+    sourceUrl: 'https://disclosures-clerk.house.gov/sample.pdf',
+    expectedSha256: 'hash',
+    expectedBytes: 32908,
+    expectedPages: 1,
+    characteristics: 'Handwritten scan; transaction count unknown.',
+    locatorProvenance: 'official_annual_index',
+    retentionScope: 'isolated_offline_test_only',
+    localCopyStatus: 'present_unverified',
+    imported: false,
+    processingStatus: 'not_imported',
+    extractionStatus: 'not_attempted',
+    artifact: null,
+    receipt: {
+      manifestVersion: 'test',
+      expectedRowStarts: null,
+      extractedRowStarts: null,
+      independentCountMatches: null,
+      storedRows: 0,
+      normalizedRows: 0,
+      partialRows: 0,
+      unresolvedFragmentCount: 0,
+      completeness: 'unknown',
+      engine: null,
+      integrity: 'not_checked',
+      reconciliationSha256: 'hash',
+    },
+  }
+  const sample: OfflineHouseSample = {
+    mode: 'offline_retained_sample',
+    population: 'test',
+    liveAcquisitionPermitted: false,
+    filing: entry,
+    expectedSha256: entry.expectedSha256,
+    reasonCode: 'house_live_access_unresolved',
+    detail: 'Offline only.',
+    evidence: { population: 'test', artifacts: [] },
+  }
+  function render(current: OfflineHouseEntry, currentSample = sample) {
+    return renderToStaticMarkup(
+      createElement(HouseFilingEvidence, {
+        entry: current,
+        sample: currentSample,
+        pending: false,
+        error: null,
+        onInspect: () => {},
+        onResume: () => {},
+        contentUrl: () => '/exact-retained',
+      })
+    )
+  }
+  const declaration = render(entry)
+  assert.match(declaration, /Available corpus entry; not imported/)
+  assert.match(declaration, /Extraction: not_attempted/)
+  assert.match(declaration, /Completeness: unknown/)
+  assert.doesNotMatch(
+    declaration,
+    /Resume processing|Download exact retained PDF|Local sample read:/
+  )
+
+  const artifact = {
+    id: 'artifact',
+    sourceName: 'house-clerk',
+    sourceAuthority: 'official' as const,
+    artifactKind: 'original_filing',
+    sourceUrl: entry.sourceUrl,
+    mediaType: 'application/pdf',
+    retrievalObservations: [],
+    versions: [
+      {
+        id: 'version',
+        contentSha256: 'hash',
+        contentLength: 32908,
+        mediaType: 'application/pdf',
+        firstObservedAt: 1,
+        rowOccurrences: [],
+        extractions: [
+          {
+            id: 'extract',
+            method: 'house-ptr-native-table',
+            methodVersion: '1',
+            extractedAt: 1,
+            status: 'unsupported',
+            error: 'page_1:no_native_text',
+            representation: {
+              engine: 'test',
+              pages: [{ page: 1, status: 'unsupported' }],
+              issues: ['page_1:no_native_text'],
+              unresolvedFragments: [],
+            },
+          },
+        ],
+      },
+    ],
+  }
+  const imported = {
+    ...entry,
+    imported: true,
+    artifact,
+    processingStatus: 'finished',
+    extractionStatus: 'unsupported',
+    receipt: { ...entry.receipt, integrity: 'verified' },
+  }
+  const scan = render(imported, {
+    ...sample,
+    evidence: { population: 'test', artifacts: [artifact] },
+  })
+  assert.match(scan, /Extraction: unsupported/)
+  assert.match(scan, /page_1:no_native_text/)
+  assert.match(scan, /Resume processing/)
+  assert.match(scan, /records no local-read observation/)
+  assert.match(scan, /Finished processing does not establish complete extraction/)
+
+  const partial = render({
+    ...imported,
+    extractionStatus: 'partial',
+    receipt: { ...imported.receipt, completeness: 'partial', unresolvedFragmentCount: 2 },
+  })
+  assert.match(partial, /Completeness: partial/)
+  assert.match(partial, /Unresolved fragments: 2/)
+  const corrupt = render({
+    ...imported,
+    processingStatus: 'integrity_error',
+    receipt: { ...imported.receipt, integrity: 'failed' },
+  })
+  assert.match(corrupt, /disabled=""[^>]*>Resume processing/)
 })
 
 test('Analysis shows blocked readiness and error without claiming empty success', () => {
