@@ -55,6 +55,7 @@ export interface DisclosureArtifact {
     freshnessStatus: string
     coverageStatus: string
     httpStatus: number | null
+    sourceMetadata: Record<string, unknown>
   }>
 }
 

@@ -4,6 +4,7 @@ import CapabilityNotice from '../capabilities/CapabilityNotice'
 import { useCapabilities } from '../data/useCapabilities'
 import WatchEventsPanel from './WatchEventsPanel'
 import InvestigationsPanel from './InvestigationsPanel'
+import HouseFilingIntake from './HouseFilingIntake'
 
 const sectionClass = 'mt-3.5 rounded-md border border-[#2a2a2e] bg-[#17171a] p-4'
 const labelClass = 'text-[11px] uppercase tracking-[0.06em] text-[#6b6b7b]'
@@ -46,6 +47,8 @@ export default function DisclosureEvidencePage() {
         {loading && <p className="text-[#6b6b7b]">Loading retained evidence…</p>}
         {error && <p className="text-[#e5534b]">{error}</p>}
         {capabilityError && <p className="text-[#e5534b]">{capabilityError}</p>}
+
+        <HouseFilingIntake />
 
         {surfacedCapabilities && (
           <section className={`${sectionClass} mb-5`}>

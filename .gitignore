@@ -39,6 +39,7 @@ dist-ssr
 
 .env
 server/signal.db
+server/.local/
 server/venv/
 server/.agent_spend.json
 venv/

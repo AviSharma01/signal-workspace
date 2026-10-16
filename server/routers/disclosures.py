@@ -2,11 +2,14 @@ from __future__ import annotations
 
 import base64
 import binascii
+import hashlib
 import re
 import time
+from pathlib import Path
 from typing import Literal
 
 from fastapi import APIRouter, Depends, HTTPException, Query, status
+from fastapi.responses import Response
 from pydantic import BaseModel, ConfigDict, Field, field_validator
 
 from capabilities import CapabilityApplication, result_state
@@ -17,6 +20,13 @@ from routers.capabilities import capability_json, get_capability_application
 
 
 router = APIRouter(prefix="/api/disclosures", tags=["disclosures"])
+OFFLINE_SAMPLE = Path(__file__).parents[1] / "tests/fixtures/house_ptr/2021-20018021.pdf"
+OFFLINE_SAMPLE_SHA256 = "071aab65d8223132ac372501605fadc98948e3c8f0faa006931ea3902c86d7c2"
+OFFLINE_SAMPLE_URL = house_filing_url(2021, "20018021")
+
+
+class OfflineSampleCommand(BaseModel):
+    model_config = ConfigDict(extra="forbid")
 
 
 class RetrievalCommand(BaseModel):
@@ -51,7 +61,6 @@ class ReprocessCommand(BaseModel):
 
 
 _application = DisclosureApplication(get_connection)
-_house_source = HouseDisclosureSource()
 
 
 def get_disclosure_application() -> DisclosureApplication:
@@ -59,7 +68,10 @@ def get_disclosure_application() -> DisclosureApplication:
 
 
 def get_house_source() -> HouseDisclosureSource:
-    return _house_source
+    raise HTTPException(status_code=409, detail={
+        "reasonCode": "house_live_access_unresolved",
+        "message": "Live House acquisition and retained-copy permissions remain unresolved. Use the isolated offline sample.",
+    })
 
 
 def _validate_house_locator(report_year: int, document_id: str | None = None) -> None:
@@ -70,6 +82,72 @@ def _validate_house_locator(report_year: int, document_id: str | None = None) ->
             house_filing_url(report_year, document_id)
     except ValueError as exc:
         raise HTTPException(status_code=422, detail=str(exc)) from exc
+
+
+def _offline_evidence(application: DisclosureApplication) -> dict:
+    evidence = application.query_evidence(population="test")
+    artifacts = []
+    for artifact in evidence["artifacts"]:
+        if artifact["sourceUrl"] != OFFLINE_SAMPLE_URL or artifact["sourceAuthority"] != "official":
+            continue
+        versions = [version for version in artifact["versions"] if version["contentSha256"] == OFFLINE_SAMPLE_SHA256]
+        version_ids = {version["id"] for version in versions}
+        observations = [item for item in artifact["retrievalObservations"]
+                        if item["artifactVersionId"] in version_ids
+                        and item["sourceMetadata"].get("observationKind") == "offline_sample_read"]
+        if versions and observations:
+            artifacts.append({**artifact, "versions": versions, "retrievalObservations": observations})
+    filing_ids = {row["sourceFiling"]["id"] for artifact in artifacts for version in artifact["versions"]
+                  for row in version["rowOccurrences"] if row["sourceFiling"]}
+    return {"population": "test", "artifacts": artifacts,
+            "sourceFilings": [filing for filing in evidence["sourceFilings"] if filing["id"] in filing_ids]}
+
+
+@router.get("/offline-sample")
+def read_offline_sample(application: DisclosureApplication = Depends(get_disclosure_application)) -> dict:
+    return {
+        "mode": "offline_retained_sample", "population": "test",
+        "filing": {"reportYear": 2021, "documentId": "20018021", "sourceUrl": OFFLINE_SAMPLE_URL},
+        "expectedSha256": OFFLINE_SAMPLE_SHA256,
+        "liveAcquisitionPermitted": False, "reasonCode": "house_live_access_unresolved",
+        "detail": "Offline retained official sample only. Local reads prove no live source availability, freshness or publication time.",
+        "evidence": _offline_evidence(application),
+    }
+
+
+@router.post("/offline-sample/observations", status_code=status.HTTP_201_CREATED)
+def inspect_offline_sample(command: OfflineSampleCommand,
+                          application: DisclosureApplication = Depends(get_disclosure_application)) -> dict:
+    try:
+        content = OFFLINE_SAMPLE.read_bytes()
+    except OSError as exc:
+        raise HTTPException(status_code=503, detail="The declared retained sample is unavailable locally.") from exc
+    if hashlib.sha256(content).hexdigest() != OFFLINE_SAMPLE_SHA256:
+        raise HTTPException(status_code=409, detail="Retained sample integrity failed; no observation was recorded.")
+    result = application.ingest_house_filing(RetrievedArtifact(
+        population="test", source_name="house-clerk", source_url=OFFLINE_SAMPLE_URL,
+        media_type="application/pdf", content=content, retrieved_at_ms=int(time.time() * 1000),
+        purpose="manual", freshness_status="unknown", coverage_status="unknown", http_status=None,
+        source_metadata={"observationKind": "offline_sample_read", "originalRetrievedAt": None,
+                         "liveSourceAvailability": "unknown", "manifest": "tests/fixtures/house_ptr/README.md"},
+    ), report_year=2021, document_id="20018021")
+    return {**result, "mode": "offline_retained_sample", "population": "test"}
+
+
+@router.get("/offline-sample/artifacts/{artifact_id}/versions/{version_id}/content")
+def download_offline_sample(artifact_id: str, version_id: str,
+                            application: DisclosureApplication = Depends(get_disclosure_application)) -> Response:
+    evidence = _offline_evidence(application)
+    if not any(artifact["id"] == artifact_id and any(version["id"] == version_id for version in artifact["versions"])
+               for artifact in evidence["artifacts"]):
+        raise HTTPException(status_code=404, detail="Offline sample version not found")
+    detail = application.get_artifact_version(artifact_id, version_id, population="test")
+    if hashlib.sha256(detail["rawContent"]).hexdigest() != OFFLINE_SAMPLE_SHA256:
+        raise HTTPException(status_code=409, detail="Retained sample integrity failed.")
+    return Response(content=detail["rawContent"], media_type="application/pdf", headers={
+        "Content-Disposition": 'attachment; filename="2021-20018021.pdf"',
+        "X-Content-Type-Options": "nosniff", "Cache-Control": "no-store",
+    })
 
 
 @router.post("/supporting-retrievals", status_code=status.HTTP_201_CREATED)

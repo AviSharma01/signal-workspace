@@ -152,7 +152,7 @@ class DisclosureJobsTest(unittest.TestCase):
             ["startup_catch_up", "reconciliation"],
         )
 
-    def test_scheduler_registers_startup_and_source_local_daily_discovery(self) -> None:
+    def test_f2_scheduler_preserves_watch_recovery_without_collection_jobs(self) -> None:
         class RecordingScheduler:
             def __init__(self):
                 self.jobs = []
@@ -169,11 +169,8 @@ class DisclosureJobsTest(unittest.TestCase):
             scheduler.start_scheduler()
 
         jobs = {kwargs.get("id"): (func, trigger, kwargs) for func, trigger, kwargs in recording.jobs}
-        self.assertIn("disclosure-startup-catch-up", jobs)
-        self.assertIn("disclosure-daily-discovery", jobs)
-        _, trigger, daily = jobs["disclosure-daily-discovery"]
-        self.assertEqual(trigger, "cron")
-        self.assertEqual(daily["timezone"], "America/New_York")
+        self.assertEqual(set(jobs), {"watch-recovery-check", "watch-startup-recovery"})
+        self.assertTrue(recording.started)
 
 
 if __name__ == "__main__":

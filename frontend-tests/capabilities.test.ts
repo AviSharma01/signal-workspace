@@ -10,11 +10,59 @@ import CapabilityStateLabel from '../src/capabilities/CapabilityStateLabel.js'
 import AnalysisResults from '../src/detail/AnalysisResults.js'
 import CohortResults from '../src/detail/CohortResults.js'
 import type { AnalysisResponse, CohortResponse } from '../src/data/analysisTypes.js'
+import HouseFilingEvidence from '../src/detail/HouseFilingEvidence.js'
+import type { OfflineHouseSample } from '../src/data/houseFiling.js'
 import {
   capabilityActionDisabled,
   capabilityPresentation,
   relationshipPresentation,
 } from '../src/capabilities/presentation.js'
+
+test('offline House inspection labels test provenance and cannot imply live readiness', () => {
+  const sample: OfflineHouseSample = {
+    mode: 'offline_retained_sample', population: 'test', liveAcquisitionPermitted: false,
+    filing: { reportYear: 2021, documentId: '20018021', sourceUrl: 'https://disclosures-clerk.house.gov/example.pdf' },
+    expectedSha256: '071aab65d8223132ac372501605fadc98948e3c8f0faa006931ea3902c86d7c2',
+    reasonCode: 'house_live_access_unresolved', detail: 'Offline sample only.',
+    evidence: { population: 'test', artifacts: [{
+      id: 'artifact', sourceName: 'house-clerk', sourceAuthority: 'official', artifactKind: 'original_filing',
+      sourceUrl: 'https://disclosures-clerk.house.gov/example.pdf', mediaType: 'application/pdf',
+      versions: [{
+        id: 'version', contentSha256: '071aab65d8223132ac372501605fadc98948e3c8f0faa006931ea3902c86d7c2',
+        contentLength: 1234, mediaType: 'application/pdf', firstObservedAt: 1,
+        extractions: [{ id: 'extraction', method: 'house-ptr-native-table', methodVersion: '1', extractedAt: 1, status: 'succeeded', error: null }],
+        rowOccurrences: [{ id: 'row', ordinal: 0, parseStatus: 'parsed', normalizations: [],
+          rawFields: { asset: '<script>unsafe source text</script>', sourcePosition: { page: 1, band: 0 } } }],
+      }],
+      retrievalObservations: [{ id: 'observation', artifactVersionId: 'version', observedAt: 1, purpose: 'manual',
+        availabilityStatus: 'available', freshnessStatus: 'unknown', coverageStatus: 'unknown', httpStatus: null,
+        sourceMetadata: { observationKind: 'offline_sample_read', originalRetrievedAt: null } }],
+    }] },
+  }
+  const markup = renderToStaticMarkup(createElement(HouseFilingEvidence, {
+    sample, pending: false, error: null, onInspect: () => {},
+    contentUrl: (artifact, version) => `/retained/${artifact}/${version}`,
+  }))
+  for (const text of ['test population', 'Live acquisition is blocked', 'Publication time: unknown',
+    'Original retrieval instant: unknown', 'Local sample read:', 'Live source availability: unknown',
+    'Identity and Event eligibility remain unresolved', 'house-ptr-native-table@1',
+    '071aab65d8223132ac372501605fadc98948e3c8f0faa006931ea3902c86d7c2']) {
+    assert.ok(markup.includes(text), text)
+  }
+  assert.match(markup, /href="\/retained\/artifact\/version"/)
+  assert.match(markup, /&lt;script&gt;/)
+  assert.doesNotMatch(markup, /<script>|Admit Watch|Run investigation/)
+})
+
+test('offline House inspection exposes pending and failed actions', () => {
+  const markup = renderToStaticMarkup(createElement(HouseFilingEvidence, {
+    sample: null, pending: true, error: 'Sample integrity failed.', onInspect: () => {}, contentUrl: () => '',
+  }))
+  assert.match(markup, /disabled=""/)
+  assert.match(markup, /Loading sample/)
+  assert.match(markup, /role="alert"/)
+  assert.match(markup, /Sample integrity failed/)
+})
 
 test('Analysis shows blocked readiness and error without claiming empty success', () => {
   const response: AnalysisResponse = {

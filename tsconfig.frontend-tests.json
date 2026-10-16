@@ -6,7 +6,7 @@
     "outDir": "./node_modules/.tmp/frontend-tests",
     "rootDir": ".",
     "tsBuildInfoFile": "./node_modules/.tmp/tsconfig.frontend-tests.tsbuildinfo",
-    "types": ["node"]
+    "types": ["node", "vite/client"]
   },
   "include": ["frontend-tests/capabilities.test.ts"]
 }

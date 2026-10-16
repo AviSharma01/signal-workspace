@@ -5,6 +5,7 @@ from fastapi.middleware.cors import CORSMiddleware
 
 from db.database import init_db
 from jobs.scheduler import start_scheduler, shutdown_scheduler
+from local_access import LOCAL_ORIGINS, LocalAccessMiddleware
 from routers import analysis, capabilities, companies, disclosures, events, findings, investigations, prices, scan, signals, watch_events
 
 
@@ -12,18 +13,21 @@ from routers import analysis, capabilities, companies, disclosures, events, find
 async def lifespan(app: FastAPI):
     init_db()
     start_scheduler()
-    yield
-    shutdown_scheduler()
+    try:
+        yield
+    finally:
+        shutdown_scheduler()
 
 
 app = FastAPI(lifespan=lifespan)
 
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["http://localhost:5173"],
+    allow_origins=LOCAL_ORIGINS,
     allow_methods=["GET", "POST"],
     allow_headers=["Accept", "Content-Type"],
 )
+app.add_middleware(LocalAccessMiddleware)
 
 app.include_router(companies.router)
 app.include_router(capabilities.router)

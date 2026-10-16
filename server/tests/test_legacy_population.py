@@ -41,9 +41,12 @@ class LegacyPopulationTest(unittest.TestCase):
                 seed_demo.seed()
         with database.get_connection() as conn:
             self.assertEqual(conn.execute('SELECT count(*) FROM news_items').fetchone()[0], 0)
-            self.assertEqual(conn.execute('SELECT count(*) FROM companies').fetchone()[0], 5)
+            self.assertEqual(conn.execute('SELECT count(*) FROM companies').fetchone()[0], 0)
 
     def test_default_queries_exclude_fixtures_and_explicit_demo_queries_retain_them(self):
+        # An existing user record is explicit fixture input, never a startup seed.
+        with database.get_connection() as conn:
+            conn.execute("INSERT INTO companies (id, name, population) VALUES ('AAPL', 'Existing Apple record', 'real')")
         self.seed()
         self.seed()  # Explicit demo workflow remains idempotent.
         ids = {row['id'] for row in self.client.get('/api/companies').json()}
@@ -64,6 +67,7 @@ class LegacyPopulationTest(unittest.TestCase):
 
     def test_company_and_context_population_filters_exclude_test_and_evaluation(self):
         with database.get_connection() as conn:
+            conn.execute("INSERT INTO companies (id, name, population) VALUES ('AAPL', 'Explicit test context', 'real')")
             for population in ['real', 'demo', 'test', 'evaluation']:
                 conn.execute('INSERT INTO companies (id, name, population) VALUES (?, ?, ?)',
                              (population.upper(), population, population))
